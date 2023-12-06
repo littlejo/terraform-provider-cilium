@@ -6,7 +6,10 @@ package provider
 import (
 	"context"
 	"fmt"
-	"net/http"
+	"os"
+
+	"github.com/cilium/cilium-cli/install"
+	"github.com/cilium/cilium-cli/k8s"
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -19,38 +22,38 @@ import (
 )
 
 // Ensure provider defined types fully satisfy framework interfaces.
-var _ resource.Resource = &ExampleResource{}
-var _ resource.ResourceWithImportState = &ExampleResource{}
+var _ resource.Resource = &CiliumInstallResource{}
+var _ resource.ResourceWithImportState = &CiliumInstallResource{}
 
-func NewExampleResource() resource.Resource {
-	return &ExampleResource{}
+func NewCiliumInstallResource() resource.Resource {
+	return &CiliumInstallResource{}
 }
 
 // ExampleResource defines the resource implementation.
-type ExampleResource struct {
-	client *http.Client
+type CiliumInstallResource struct {
+	client *k8s.Client
 }
 
 // ExampleResourceModel describes the resource data model.
-type ExampleResourceModel struct {
-	ConfigurableAttribute types.String `tfsdk:"configurable_attribute"`
-	Defaulted             types.String `tfsdk:"defaulted"`
-	Id                    types.String `tfsdk:"id"`
+type CiliumInstallResourceModel struct {
+	Version   types.String `tfsdk:"version"`
+	Defaulted types.String `tfsdk:"defaulted"`
+	Id        types.String `tfsdk:"id"`
 }
 
-func (r *ExampleResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_example"
+func (r *CiliumInstallResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_install"
 }
 
-func (r *ExampleResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (r *CiliumInstallResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
-		MarkdownDescription: "Example resource",
+		MarkdownDescription: "Install resource",
 
 		Attributes: map[string]schema.Attribute{
-			"configurable_attribute": schema.StringAttribute{
-				MarkdownDescription: "Example configurable attribute",
-				Optional:            true,
+			"version": schema.StringAttribute{
+				MarkdownDescription: "Version of Cilium",
+				Required:            true,
 			},
 			"defaulted": schema.StringAttribute{
 				MarkdownDescription: "Example configurable attribute with default value",
@@ -69,18 +72,18 @@ func (r *ExampleResource) Schema(ctx context.Context, req resource.SchemaRequest
 	}
 }
 
-func (r *ExampleResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+func (r *CiliumInstallResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
 	// Prevent panic if the provider has not been configured.
 	if req.ProviderData == nil {
 		return
 	}
 
-	client, ok := req.ProviderData.(*http.Client)
+	client, ok := req.ProviderData.(*k8s.Client)
 
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
-			fmt.Sprintf("Expected *http.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+			fmt.Sprintf("Expected *k8s.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
 		)
 
 		return
@@ -89,8 +92,14 @@ func (r *ExampleResource) Configure(ctx context.Context, req resource.ConfigureR
 	r.client = client
 }
 
-func (r *ExampleResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var data ExampleResourceModel
+func (r *CiliumInstallResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	var data CiliumInstallResourceModel
+	var params = install.Parameters{Writer: os.Stdout}
+	params.Namespace = "kube-system"
+	params.Version = "1.14.2"
+	params.Azure.ResourceGroupName = "1-0645f7e3-playground-sandbox"
+	params.APIVersions = []string{"v1"}
+	params.HelmValuesSecretName = "cilium"
 
 	// Read Terraform plan data into the model
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
@@ -99,17 +108,20 @@ func (r *ExampleResource) Create(ctx context.Context, req resource.CreateRequest
 		return
 	}
 
-	// If applicable, this is a great opportunity to initialize any necessary
-	// provider client data and make a call using it.
-	// httpResp, err := r.client.Do(httpReq)
-	// if err != nil {
-	//     resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to create example, got error: %s", err))
-	//     return
-	// }
+	installer, err := install.NewK8sInstaller(r.client, params)
+	if err != nil {
+		fmt.Printf("unable to create Cilium installer: %v\n", err)
+		return
+	}
 
+	if err := installer.Install(context.Background()); err != nil {
+		fmt.Printf("Unable to install Cilium: %v\n", err)
+		installer.RollbackInstallation(context.Background())
+	}
 	// For the purposes of this example code, hardcoding a response value to
 	// save into the Terraform state.
 	data.Id = types.StringValue("example-id")
+	data.Version = types.StringValue("1.14.2")
 
 	// Write logs using the tflog package
 	// Documentation: https://terraform.io/plugin/log
@@ -119,8 +131,8 @@ func (r *ExampleResource) Create(ctx context.Context, req resource.CreateRequest
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (r *ExampleResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var data ExampleResourceModel
+func (r *CiliumInstallResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+	var data CiliumInstallResourceModel
 
 	// Read Terraform prior state data into the model
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
@@ -141,8 +153,8 @@ func (r *ExampleResource) Read(ctx context.Context, req resource.ReadRequest, re
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (r *ExampleResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var data ExampleResourceModel
+func (r *CiliumInstallResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	var data CiliumInstallResourceModel
 
 	// Read Terraform plan data into the model
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
@@ -163,8 +175,8 @@ func (r *ExampleResource) Update(ctx context.Context, req resource.UpdateRequest
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (r *ExampleResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var data ExampleResourceModel
+func (r *CiliumInstallResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+	var data CiliumInstallResourceModel
 
 	// Read Terraform prior state data into the model
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
@@ -182,6 +194,6 @@ func (r *ExampleResource) Delete(ctx context.Context, req resource.DeleteRequest
 	// }
 }
 
-func (r *ExampleResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+func (r *CiliumInstallResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
 }
