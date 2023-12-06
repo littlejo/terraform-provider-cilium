@@ -10,6 +10,7 @@ import (
 
 	"github.com/cilium/cilium-cli/install"
 	"github.com/cilium/cilium-cli/k8s"
+	"helm.sh/helm/v3/pkg/cli/values"
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -36,9 +37,12 @@ type CiliumInstallResource struct {
 
 // ExampleResourceModel describes the resource data model.
 type CiliumInstallResourceModel struct {
-	Version   types.String `tfsdk:"version"`
-	Defaulted types.String `tfsdk:"defaulted"`
-	Id        types.String `tfsdk:"id"`
+	Version                    types.String `tfsdk:"version"`
+	AzureResourceGroupName     types.String `tfsdk:"azure_resource_group_name"`
+	ClusterId                  types.String `tfsdk:"cluster_id"`
+	ClusterName                types.String `tfsdk:"cluster_name"`
+	ClusterPoolIpv4PodCidrList types.List   `tfsdk:"cluster_pool_ipv4_pod_cidr_list"`
+	Id                         types.String `tfsdk:"id"`
 }
 
 func (r *CiliumInstallResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -55,11 +59,27 @@ func (r *CiliumInstallResource) Schema(ctx context.Context, req resource.SchemaR
 				MarkdownDescription: "Version of Cilium",
 				Required:            true,
 			},
-			"defaulted": schema.StringAttribute{
-				MarkdownDescription: "Example configurable attribute with default value",
+			"azure_resource_group_name": schema.StringAttribute{
+				MarkdownDescription: "Azure Resource Group Name",
 				Optional:            true,
 				Computed:            true,
-				Default:             stringdefault.StaticString("example value when not configured"),
+			},
+			"cluster_id": schema.StringAttribute{
+				MarkdownDescription: "Cluster Id (useful to modify for cluster mesh)",
+				Optional:            true,
+				Computed:            true,
+				Default:             stringdefault.StaticString("0"),
+			},
+			"cluster_name": schema.StringAttribute{
+				MarkdownDescription: "Cluster Name (useful to modify for Cluster Mesh)",
+				Optional:            true,
+				Computed:            true,
+			},
+			"cluster_pool_ipv4_pod_cidr_list": schema.ListAttribute{
+				ElementType:         types.StringType,
+				MarkdownDescription: "List of CIDR for pod",
+				Optional:            true,
+				Computed:            true,
 			},
 			"id": schema.StringAttribute{
 				Computed:            true,
@@ -95,9 +115,8 @@ func (r *CiliumInstallResource) Configure(ctx context.Context, req resource.Conf
 func (r *CiliumInstallResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var data CiliumInstallResourceModel
 	var params = install.Parameters{Writer: os.Stdout}
+	var options values.Options
 	params.Namespace = "kube-system"
-	params.Version = "1.14.2"
-	params.Azure.ResourceGroupName = "1-0645f7e3-playground-sandbox"
 	params.APIVersions = []string{"v1"}
 	params.HelmValuesSecretName = "cilium"
 
@@ -107,6 +126,18 @@ func (r *CiliumInstallResource) Create(ctx context.Context, req resource.CreateR
 	if resp.Diagnostics.HasError() {
 		return
 	}
+	params.Version = data.Version.ValueString()
+	params.Azure.ResourceGroupName = data.AzureResourceGroupName.ValueString()
+	clusterId := data.ClusterId.ValueString()
+	clusterName := data.ClusterName.ValueString()
+	clusterPoolIpv4PodCidrList := data.ClusterPoolIpv4PodCidrList.Elements()
+	a := ""
+	for _, element := range clusterPoolIpv4PodCidrList {
+		a = a + element.String()
+	}
+
+	options.Values = []string{"cluster.id=" + clusterId, "cluster.name=" + clusterName, "ipam.operator.clusterPoolIPv4PodCIDRList=" + a}
+	params.HelmOpts = options
 
 	installer, err := install.NewK8sInstaller(r.client, params)
 	if err != nil {
@@ -120,8 +151,7 @@ func (r *CiliumInstallResource) Create(ctx context.Context, req resource.CreateR
 	}
 	// For the purposes of this example code, hardcoding a response value to
 	// save into the Terraform state.
-	data.Id = types.StringValue("example-id")
-	data.Version = types.StringValue("1.14.2")
+	data.Id = types.StringValue("cilium")
 
 	// Write logs using the tflog package
 	// Documentation: https://terraform.io/plugin/log
