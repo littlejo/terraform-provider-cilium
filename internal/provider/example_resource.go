@@ -131,10 +131,15 @@ func (r *CiliumInstallResource) Create(ctx context.Context, req resource.CreateR
 	clusterId := data.ClusterId.ValueString()
 	clusterName := data.ClusterName.ValueString()
 	clusterPoolIpv4PodCidrList := data.ClusterPoolIpv4PodCidrList.Elements()
-	a := ""
-	for _, element := range clusterPoolIpv4PodCidrList {
-		a = a + element.String()
+	a := "{"
+	for i, element := range clusterPoolIpv4PodCidrList {
+		if i > 0 {
+			a += ","
+		}
+		a += element.String()
 	}
+	a += "}"
+	fmt.Printf("clusterPoolIpv4PodCidrList: %v\n", a)
 
 	options.Values = []string{"cluster.id=" + clusterId, "cluster.name=" + clusterName, "ipam.operator.clusterPoolIPv4PodCIDRList=" + a}
 	params.HelmOpts = options
@@ -145,9 +150,9 @@ func (r *CiliumInstallResource) Create(ctx context.Context, req resource.CreateR
 		return
 	}
 
-	if err := installer.Install(context.Background()); err != nil {
+	if err := installer.InstallWithHelm(context.Background(), r.client); err != nil {
 		fmt.Printf("Unable to install Cilium: %v\n", err)
-		installer.RollbackInstallation(context.Background())
+		return
 	}
 	// For the purposes of this example code, hardcoding a response value to
 	// save into the Terraform state.
