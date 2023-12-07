@@ -5,6 +5,7 @@ package provider
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 
@@ -12,6 +13,7 @@ import (
 	"github.com/cilium/cilium-cli/defaults"
 	"github.com/cilium/cilium-cli/install"
 	"github.com/cilium/cilium-cli/k8s"
+	"github.com/cilium/cilium-cli/status"
 	"helm.sh/helm/v3/pkg/cli/values"
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -170,12 +172,41 @@ func (r *CiliumInstallResource) Create(ctx context.Context, req resource.CreateR
 
 func (r *CiliumInstallResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data CiliumInstallResourceModel
+	k8sClient := r.client
+	var params = status.K8sStatusParameters{}
 
 	// Read Terraform prior state data into the model
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 
 	if resp.Diagnostics.HasError() {
 		return
+	}
+
+	params.Namespace = "kube-system"
+
+	collector, err := status.NewK8sStatusCollector(k8sClient, params)
+	if err != nil {
+		return
+	}
+
+	s, err := collector.Status(context.Background())
+	if err != nil {
+		// Report the most recent status even if an error occurred.
+		fmt.Fprint(os.Stderr, s.Format())
+		fmt.Printf("Unable to determine status: %s\n", err)
+		return
+	}
+	if params.Output == status.OutputJSON {
+		jsonStatus, err := json.MarshalIndent(s, "", " ")
+		if err != nil {
+			// Report the most recent status even if an error occurred.
+			fmt.Fprint(os.Stderr, s.Format())
+			fmt.Printf("Unable to marshal status to JSON: %s\n", err)
+			return
+		}
+		fmt.Println(string(jsonStatus))
+	} else {
+		fmt.Print(s.Format())
 	}
 
 	// Save updated data into Terraform state
