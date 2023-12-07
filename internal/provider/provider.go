@@ -75,6 +75,8 @@ func (p *CiliumProvider) Configure(ctx context.Context, req provider.ConfigureRe
 func (p *CiliumProvider) Resources(ctx context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
 		NewCiliumInstallResource,
+		NewCiliumClusterMeshEnableResource,
+		NewCiliumClusterMeshConnectResource,
 	}
 }
 
