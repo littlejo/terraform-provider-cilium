@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/cilium/cilium-cli/connectivity/check"
+	"github.com/cilium/cilium-cli/defaults"
 	"github.com/cilium/cilium-cli/install"
 	"github.com/cilium/cilium-cli/k8s"
 	"helm.sh/helm/v3/pkg/cli/values"
@@ -176,14 +178,6 @@ func (r *CiliumInstallResource) Read(ctx context.Context, req resource.ReadReque
 		return
 	}
 
-	// If applicable, this is a great opportunity to initialize any necessary
-	// provider client data and make a call using it.
-	// httpResp, err := r.client.Do(httpReq)
-	// if err != nil {
-	//     resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read example, got error: %s", err))
-	//     return
-	// }
-
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -212,6 +206,9 @@ func (r *CiliumInstallResource) Update(ctx context.Context, req resource.UpdateR
 
 func (r *CiliumInstallResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data CiliumInstallResourceModel
+	k8sClient := r.client
+	var params = install.UninstallParameters{Writer: os.Stdout}
+	namespace := "kube-system"
 
 	// Read Terraform prior state data into the model
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
@@ -220,13 +217,28 @@ func (r *CiliumInstallResource) Delete(ctx context.Context, req resource.DeleteR
 		return
 	}
 
-	// If applicable, this is a great opportunity to initialize any necessary
-	// provider client data and make a call using it.
-	// httpResp, err := r.client.Do(httpReq)
-	// if err != nil {
-	//     resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete example, got error: %s", err))
-	//     return
-	// }
+	params.Namespace = namespace
+	params.TestNamespace = defaults.ConnectivityCheckNamespace
+	params.Wait = true
+	ctxb := context.Background()
+	version := data.Version.ValueString()
+
+	cc, err := check.NewConnectivityTest(k8sClient, check.Parameters{
+		CiliumNamespace: namespace,
+		TestNamespace:   params.TestNamespace,
+		FlowValidation:  check.FlowValidationModeDisabled,
+		Writer:          os.Stdout,
+	}, version)
+	if err != nil {
+		fmt.Printf("⚠ ️ Failed to initialize connectivity test uninstaller: %s\n", err)
+	} else {
+		cc.UninstallResources(ctxb, params.Wait)
+	}
+	uninstaller := install.NewK8sUninstaller(k8sClient, params)
+	if err := uninstaller.UninstallWithHelm(ctxb, k8sClient.HelmActionConfig); err != nil {
+		fmt.Printf("⚠ ️ Unable to uninstall Cilium: %s\n", err)
+		return
+	}
 }
 
 func (r *CiliumInstallResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
