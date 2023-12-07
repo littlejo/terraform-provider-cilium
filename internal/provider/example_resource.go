@@ -41,11 +41,14 @@ type CiliumInstallResource struct {
 
 // ExampleResourceModel describes the resource data model.
 type CiliumInstallResourceModel struct {
-	Version                    types.String `tfsdk:"version"`
 	AzureResourceGroupName     types.String `tfsdk:"azure_resource_group_name"`
 	ClusterId                  types.String `tfsdk:"cluster_id"`
 	ClusterName                types.String `tfsdk:"cluster_name"`
 	ClusterPoolIpv4PodCidrList types.List   `tfsdk:"cluster_pool_ipv4_pod_cidr_list"`
+	Version                    types.String `tfsdk:"version"`
+	Namespace                  types.String `tfsdk:"namespace"`
+	Repository                 types.String `tfsdk:"repository"`
+	DataPath                   types.String `tfsdk:"data_path"`
 	Id                         types.String `tfsdk:"id"`
 }
 
@@ -59,10 +62,6 @@ func (r *CiliumInstallResource) Schema(ctx context.Context, req resource.SchemaR
 		MarkdownDescription: "Install resource",
 
 		Attributes: map[string]schema.Attribute{
-			"version": schema.StringAttribute{
-				MarkdownDescription: "Version of Cilium",
-				Required:            true,
-			},
 			"azure_resource_group_name": schema.StringAttribute{
 				MarkdownDescription: "Azure Resource Group Name",
 				Optional:            true,
@@ -84,6 +83,30 @@ func (r *CiliumInstallResource) Schema(ctx context.Context, req resource.SchemaR
 				MarkdownDescription: "List of CIDR for pod",
 				Optional:            true,
 				Computed:            true,
+			},
+			"version": schema.StringAttribute{
+				MarkdownDescription: "Version of Cilium",
+				Optional:            true,
+				Computed:            true,
+				Default:             stringdefault.StaticString(defaults.Version),
+			},
+			"namespace": schema.StringAttribute{
+				MarkdownDescription: "Namespace in which to install",
+				Optional:            true,
+				Computed:            true,
+				Default:             stringdefault.StaticString("kube-system"),
+			},
+			"repository": schema.StringAttribute{
+				MarkdownDescription: "Helm repository",
+				Optional:            true,
+				Computed:            true,
+				Default:             stringdefault.StaticString(defaults.HelmRepository),
+			},
+			"data_path": schema.StringAttribute{
+				MarkdownDescription: "Datapath mode to use { tunnel | native | aws-eni | gke | azure | aks-byocni } (default: autodetected).",
+				Optional:            true,
+				Computed:            true,
+				Default:             stringdefault.StaticString(""),
 			},
 			"id": schema.StringAttribute{
 				Computed:            true,
@@ -118,9 +141,9 @@ func (r *CiliumInstallResource) Configure(ctx context.Context, req resource.Conf
 
 func (r *CiliumInstallResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var data CiliumInstallResourceModel
+	k8sClient := r.client
 	var params = install.Parameters{Writer: os.Stdout}
 	var options values.Options
-	params.Namespace = "kube-system"
 	params.APIVersions = []string{"v1"}
 	params.HelmValuesSecretName = "cilium"
 
@@ -130,6 +153,8 @@ func (r *CiliumInstallResource) Create(ctx context.Context, req resource.CreateR
 	if resp.Diagnostics.HasError() {
 		return
 	}
+	namespace := data.Namespace.ValueString()
+	params.Namespace = namespace
 	params.Version = data.Version.ValueString()
 	params.Azure.ResourceGroupName = data.AzureResourceGroupName.ValueString()
 	clusterId := data.ClusterId.ValueString()
@@ -148,7 +173,7 @@ func (r *CiliumInstallResource) Create(ctx context.Context, req resource.CreateR
 	options.Values = []string{"cluster.id=" + clusterId, "cluster.name=" + clusterName, "ipam.operator.clusterPoolIPv4PodCIDRList=" + a}
 	params.HelmOpts = options
 
-	installer, err := install.NewK8sInstaller(r.client, params)
+	installer, err := install.NewK8sInstaller(k8sClient, params)
 	if err != nil {
 		fmt.Printf("unable to create Cilium installer: %v\n", err)
 		return
@@ -182,7 +207,8 @@ func (r *CiliumInstallResource) Read(ctx context.Context, req resource.ReadReque
 		return
 	}
 
-	params.Namespace = "kube-system"
+	namespace := data.Namespace.ValueString()
+	params.Namespace = namespace
 
 	collector, err := status.NewK8sStatusCollector(k8sClient, params)
 	if err != nil {
@@ -215,6 +241,9 @@ func (r *CiliumInstallResource) Read(ctx context.Context, req resource.ReadReque
 
 func (r *CiliumInstallResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var data CiliumInstallResourceModel
+	k8sClient := r.client
+	var params = install.Parameters{Writer: os.Stdout}
+	var options values.Options
 
 	// Read Terraform plan data into the model
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
@@ -223,13 +252,35 @@ func (r *CiliumInstallResource) Update(ctx context.Context, req resource.UpdateR
 		return
 	}
 
-	// If applicable, this is a great opportunity to initialize any necessary
-	// provider client data and make a call using it.
-	// httpResp, err := r.client.Do(httpReq)
-	// if err != nil {
-	//     resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to update example, got error: %s", err))
-	//     return
-	// }
+	namespace := data.Namespace.ValueString()
+	params.Namespace = namespace
+	params.Version = data.Version.ValueString()
+	params.Azure.ResourceGroupName = data.AzureResourceGroupName.ValueString()
+	clusterId := data.ClusterId.ValueString()
+	clusterName := data.ClusterName.ValueString()
+	clusterPoolIpv4PodCidrList := data.ClusterPoolIpv4PodCidrList.Elements()
+	a := "{"
+	for i, element := range clusterPoolIpv4PodCidrList {
+		if i > 0 {
+			a += ","
+		}
+		a += element.String()
+	}
+	a += "}"
+	fmt.Printf("clusterPoolIpv4PodCidrList: %v\n", a)
+
+	options.Values = []string{"cluster.id=" + clusterId, "cluster.name=" + clusterName, "ipam.operator.clusterPoolIPv4PodCIDRList=" + a}
+	params.HelmOpts = options
+
+	installer, err := install.NewK8sInstaller(k8sClient, params)
+	if err != nil {
+		fmt.Printf("Unable to upgrade Cilium: %s\n", err)
+		return
+	}
+	if err := installer.UpgradeWithHelm(context.Background(), k8sClient); err != nil {
+		fmt.Printf("Unable to upgrade Cilium: %s\n", err)
+		return
+	}
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -239,7 +290,6 @@ func (r *CiliumInstallResource) Delete(ctx context.Context, req resource.DeleteR
 	var data CiliumInstallResourceModel
 	k8sClient := r.client
 	var params = install.UninstallParameters{Writer: os.Stdout}
-	namespace := "kube-system"
 
 	// Read Terraform prior state data into the model
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
@@ -248,6 +298,7 @@ func (r *CiliumInstallResource) Delete(ctx context.Context, req resource.DeleteR
 		return
 	}
 
+	namespace := data.Namespace.ValueString()
 	params.Namespace = namespace
 	params.TestNamespace = defaults.ConnectivityCheckNamespace
 	params.Wait = true
