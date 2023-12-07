@@ -41,15 +41,13 @@ type CiliumInstallResource struct {
 
 // ExampleResourceModel describes the resource data model.
 type CiliumInstallResourceModel struct {
-	AzureResourceGroupName     types.String `tfsdk:"azure_resource_group_name"`
-	ClusterId                  types.String `tfsdk:"cluster_id"`
-	ClusterName                types.String `tfsdk:"cluster_name"`
-	ClusterPoolIpv4PodCidrList types.List   `tfsdk:"cluster_pool_ipv4_pod_cidr_list"`
-	Version                    types.String `tfsdk:"version"`
-	Namespace                  types.String `tfsdk:"namespace"`
-	Repository                 types.String `tfsdk:"repository"`
-	DataPath                   types.String `tfsdk:"data_path"`
-	Id                         types.String `tfsdk:"id"`
+	AzureResourceGroupName types.String `tfsdk:"azure_resource_group_name"`
+	HelmSet                types.List   `tfsdk:"helm_set"`
+	Version                types.String `tfsdk:"version"`
+	Namespace              types.String `tfsdk:"namespace"`
+	Repository             types.String `tfsdk:"repository"`
+	DataPath               types.String `tfsdk:"data_path"`
+	Id                     types.String `tfsdk:"id"`
 }
 
 func (r *CiliumInstallResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -67,20 +65,9 @@ func (r *CiliumInstallResource) Schema(ctx context.Context, req resource.SchemaR
 				Optional:            true,
 				Computed:            true,
 			},
-			"cluster_id": schema.StringAttribute{
-				MarkdownDescription: "Cluster Id (useful to modify for cluster mesh)",
-				Optional:            true,
-				Computed:            true,
-				Default:             stringdefault.StaticString("0"),
-			},
-			"cluster_name": schema.StringAttribute{
-				MarkdownDescription: "Cluster Name (useful to modify for Cluster Mesh)",
-				Optional:            true,
-				Computed:            true,
-			},
-			"cluster_pool_ipv4_pod_cidr_list": schema.ListAttribute{
+			"helm_set": schema.ListAttribute{
 				ElementType:         types.StringType,
-				MarkdownDescription: "List of CIDR for pod",
+				MarkdownDescription: "Set helm values on the command line (can specify multiple or separate values with commas: key1=val1,key2=val2",
 				Optional:            true,
 				Computed:            true,
 			},
@@ -97,7 +84,7 @@ func (r *CiliumInstallResource) Schema(ctx context.Context, req resource.SchemaR
 				Default:             stringdefault.StaticString("kube-system"),
 			},
 			"repository": schema.StringAttribute{
-				MarkdownDescription: "Helm repository",
+				MarkdownDescription: "Helm chart repository to download Cilium charts from",
 				Optional:            true,
 				Computed:            true,
 				Default:             stringdefault.StaticString(defaults.HelmRepository),
@@ -157,20 +144,16 @@ func (r *CiliumInstallResource) Create(ctx context.Context, req resource.CreateR
 	params.Namespace = namespace
 	params.Version = data.Version.ValueString()
 	params.Azure.ResourceGroupName = data.AzureResourceGroupName.ValueString()
-	clusterId := data.ClusterId.ValueString()
-	clusterName := data.ClusterName.ValueString()
-	clusterPoolIpv4PodCidrList := data.ClusterPoolIpv4PodCidrList.Elements()
-	a := "{"
-	for i, element := range clusterPoolIpv4PodCidrList {
-		if i > 0 {
-			a += ","
-		}
-		a += element.String()
-	}
-	a += "}"
-	fmt.Printf("clusterPoolIpv4PodCidrList: %v\n", a)
 
-	options.Values = []string{"cluster.id=" + clusterId, "cluster.name=" + clusterName, "ipam.operator.clusterPoolIPv4PodCIDRList=" + a}
+	helmSet := make([]types.String, 0, len(data.HelmSet.Elements()))
+	data.HelmSet.ElementsAs(ctx, &helmSet, false)
+
+	h := []string{}
+	for _, e := range helmSet {
+		h = append(h, e.ValueString())
+	}
+
+	options.Values = h
 	params.HelmOpts = options
 
 	installer, err := install.NewK8sInstaller(k8sClient, params)
@@ -256,20 +239,16 @@ func (r *CiliumInstallResource) Update(ctx context.Context, req resource.UpdateR
 	params.Namespace = namespace
 	params.Version = data.Version.ValueString()
 	params.Azure.ResourceGroupName = data.AzureResourceGroupName.ValueString()
-	clusterId := data.ClusterId.ValueString()
-	clusterName := data.ClusterName.ValueString()
-	clusterPoolIpv4PodCidrList := data.ClusterPoolIpv4PodCidrList.Elements()
-	a := "{"
-	for i, element := range clusterPoolIpv4PodCidrList {
-		if i > 0 {
-			a += ","
-		}
-		a += element.String()
-	}
-	a += "}"
-	fmt.Printf("clusterPoolIpv4PodCidrList: %v\n", a)
 
-	options.Values = []string{"cluster.id=" + clusterId, "cluster.name=" + clusterName, "ipam.operator.clusterPoolIPv4PodCIDRList=" + a}
+	helmSet := make([]types.String, 0, len(data.HelmSet.Elements()))
+	data.HelmSet.ElementsAs(ctx, &helmSet, false)
+
+	h := []string{}
+	for _, e := range helmSet {
+		h = append(h, e.ValueString())
+	}
+
+	options.Values = h
 	params.HelmOpts = options
 
 	installer, err := install.NewK8sInstaller(k8sClient, params)
