@@ -14,10 +14,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
-//	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
+	//	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
-//	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listdefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
+	//	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
@@ -40,9 +40,9 @@ type CiliumClusterMeshConnectResource struct {
 type CiliumClusterMeshConnectResourceModel struct {
 	//SourceEndpoints      types.List `tfsdk:"source_endpoint"`
 	//DestinationEndpoints types.List `tfsdk:"destination_endpoint"`
-	DestinationContext   types.String `tfsdk:"destination_context"`
-	Namespace            types.String `tfsdk:"namespace"`
-	Id                   types.String `tfsdk:"id"`
+	DestinationContext types.String `tfsdk:"destination_context"`
+	Namespace          types.String `tfsdk:"namespace"`
+	Id                 types.String `tfsdk:"id"`
 }
 
 func (r *CiliumClusterMeshConnectResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -215,11 +215,11 @@ func (r *CiliumClusterMeshConnectResource) Delete(ctx context.Context, req resou
 	namespace := data.Namespace.ValueString()
 	params.Namespace = namespace
 
-        cm := clustermesh.NewK8sClusterMesh(k8sClient, params)
-        if err := cm.DisconnectWithHelm(context.Background()); err != nil {
+	cm := clustermesh.NewK8sClusterMesh(k8sClient, params)
+	if err := cm.DisconnectWithHelm(context.Background()); err != nil {
 		fmt.Printf("Unable to disconnect clusters: %s\n", err)
 		return
-        }
+	}
 }
 
 func (r *CiliumClusterMeshConnectResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {

@@ -41,12 +41,12 @@ type CiliumInstallResource struct {
 
 // ExampleResourceModel describes the resource data model.
 type CiliumInstallResourceModel struct {
-	HelmSet                types.List   `tfsdk:"helm_set"`
-	Version                types.String `tfsdk:"version"`
-	Namespace              types.String `tfsdk:"namespace"`
-	Repository             types.String `tfsdk:"repository"`
-	DataPath               types.String `tfsdk:"data_path"`
-	Id                     types.String `tfsdk:"id"`
+	HelmSet    types.List   `tfsdk:"helm_set"`
+	Version    types.String `tfsdk:"version"`
+	Namespace  types.String `tfsdk:"namespace"`
+	Repository types.String `tfsdk:"repository"`
+	DataPath   types.String `tfsdk:"data_path"`
+	Id         types.String `tfsdk:"id"`
 }
 
 func (r *CiliumInstallResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
