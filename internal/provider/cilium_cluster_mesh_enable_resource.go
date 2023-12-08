@@ -45,7 +45,7 @@ type CiliumClusterMeshEnableResourceModel struct {
 }
 
 func (r *CiliumClusterMeshEnableResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_clustermeshenable"
+	resp.TypeName = req.ProviderTypeName + "_clustermesh_enable"
 }
 
 func (r *CiliumClusterMeshEnableResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
