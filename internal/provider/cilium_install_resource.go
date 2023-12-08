@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/cilium/cilium-cli/connectivity/check"
 	"github.com/cilium/cilium-cli/defaults"
@@ -196,6 +197,7 @@ func (r *CiliumInstallResource) Read(ctx context.Context, req resource.ReadReque
 		// Report the most recent status even if an error occurred.
 		fmt.Fprint(os.Stderr, s.Format())
 		fmt.Printf("Unable to determine status: %s\n", err)
+		resp.State.RemoveResource(ctx)
 		return
 	}
 	if params.Output == status.OutputJSON {
@@ -209,6 +211,11 @@ func (r *CiliumInstallResource) Read(ctx context.Context, req resource.ReadReque
 		fmt.Println(string(jsonStatus))
 	} else {
 		fmt.Print(s.Format())
+	}
+
+	if strings.Contains(s.Format(), "error") {
+		resp.State.RemoveResource(ctx)
+		return
 	}
 
 	// Save updated data into Terraform state
