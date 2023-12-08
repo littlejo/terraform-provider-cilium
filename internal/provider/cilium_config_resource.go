@@ -5,6 +5,7 @@ package provider
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"regexp"
@@ -156,11 +157,31 @@ func (r *CiliumConfigResource) Read(ctx context.Context, req resource.ReadReques
 	if resp.Diagnostics.HasError() {
 		return
 	}
-
 	namespace := data.Namespace.ValueString()
 	params.Namespace = namespace
 	key := data.Key.ValueString()
 	value := data.Value.ValueString()
+
+	readReq := CiliumConfigResourceModel{
+		Id:        data.Id,
+		Value:     data.Value,
+		Key:       data.Key,
+		Restart:   data.Restart,
+		Namespace: data.Namespace,
+	}
+
+	_, err := json.Marshal(readReq)
+
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Unable to Refresh Resource",
+			"An unexpected error occurred while creating the resource read request. "+
+				"Please report this issue to the provider developers.\n\n"+
+				"JSON Error: "+err.Error(),
+		)
+
+		return
+	}
 
 	check := config.NewK8sConfig(k8sClient, params)
 	out, err := check.View(context.Background())
