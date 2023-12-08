@@ -41,7 +41,6 @@ type CiliumInstallResource struct {
 
 // ExampleResourceModel describes the resource data model.
 type CiliumInstallResourceModel struct {
-	AzureResourceGroupName types.String `tfsdk:"azure_resource_group_name"`
 	HelmSet                types.List   `tfsdk:"helm_set"`
 	Version                types.String `tfsdk:"version"`
 	Namespace              types.String `tfsdk:"namespace"`
@@ -60,11 +59,6 @@ func (r *CiliumInstallResource) Schema(ctx context.Context, req resource.SchemaR
 		MarkdownDescription: "Install resource",
 
 		Attributes: map[string]schema.Attribute{
-			"azure_resource_group_name": schema.StringAttribute{
-				MarkdownDescription: "Azure Resource Group Name",
-				Optional:            true,
-				Computed:            true,
-			},
 			"helm_set": schema.ListAttribute{
 				ElementType:         types.StringType,
 				MarkdownDescription: "Set helm values on the command line (can specify multiple or separate values with commas: key1=val1,key2=val2",
@@ -143,7 +137,6 @@ func (r *CiliumInstallResource) Create(ctx context.Context, req resource.CreateR
 	namespace := data.Namespace.ValueString()
 	params.Namespace = namespace
 	params.Version = data.Version.ValueString()
-	params.Azure.ResourceGroupName = data.AzureResourceGroupName.ValueString()
 
 	helmSet := make([]types.String, 0, len(data.HelmSet.Elements()))
 	data.HelmSet.ElementsAs(ctx, &helmSet, false)
@@ -238,7 +231,6 @@ func (r *CiliumInstallResource) Update(ctx context.Context, req resource.UpdateR
 	namespace := data.Namespace.ValueString()
 	params.Namespace = namespace
 	params.Version = data.Version.ValueString()
-	params.Azure.ResourceGroupName = data.AzureResourceGroupName.ValueString()
 
 	helmSet := make([]types.String, 0, len(data.HelmSet.Elements()))
 	data.HelmSet.ElementsAs(ctx, &helmSet, false)
