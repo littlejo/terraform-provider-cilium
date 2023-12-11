@@ -128,7 +128,7 @@ func (r *CiliumConfigResource) Create(ctx context.Context, req resource.CreateRe
 
 	check := config.NewK8sConfig(k8sClient, params)
 	if err := check.Set(context.Background(), key, value, params); err != nil {
-		fmt.Printf("Unable to set config: %s", err)
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to set config: %s", err))
 		return
 	}
 
@@ -186,7 +186,7 @@ func (r *CiliumConfigResource) Read(ctx context.Context, req resource.ReadReques
 	check := config.NewK8sConfig(k8sClient, params)
 	out, err := check.View(context.Background())
 	if err != nil {
-		fmt.Printf("Unable to view config: %s", err)
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to view config: %s", err))
 		return
 	}
 
@@ -228,7 +228,7 @@ func (r *CiliumConfigResource) Update(ctx context.Context, req resource.UpdateRe
 
 	check := config.NewK8sConfig(k8sClient, params)
 	if err := check.Set(context.Background(), key, value, params); err != nil {
-		fmt.Printf("Unable to set config: %s", err)
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to set config: %s", err))
 		return
 	}
 
@@ -257,7 +257,8 @@ func (r *CiliumConfigResource) Delete(ctx context.Context, req resource.DeleteRe
 
 	check := config.NewK8sConfig(k8sClient, params)
 	if err := check.Delete(context.Background(), key, params); err != nil {
-		fmt.Printf("Unable to delete config: %s", err)
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete config: %s", err))
+		return
 	}
 }
 
