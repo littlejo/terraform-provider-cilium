@@ -130,7 +130,7 @@ func (r *CiliumClusterMeshEnableResource) Create(ctx context.Context, req resour
 
 	ctxb := context.Background()
 	if err := clustermesh.EnableWithHelm(ctxb, k8sClient, params); err != nil {
-		fmt.Printf("unable to create Cilium installer: %v\n", err)
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to enable ClusterMesh: %s", err))
 		return
 	}
 
@@ -195,7 +195,7 @@ func (r *CiliumClusterMeshEnableResource) Update(ctx context.Context, req resour
 
 	ctxb := context.Background()
 	if err := clustermesh.EnableWithHelm(ctxb, k8sClient, params); err != nil {
-		fmt.Printf("unable to create Cilium installer: %v\n", err)
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to enable ClusterMesh: %s", err))
 		return
 	}
 
@@ -222,7 +222,7 @@ func (r *CiliumClusterMeshEnableResource) Delete(ctx context.Context, req resour
 	ctxb := context.Background()
 
 	if err := clustermesh.DisableWithHelm(ctxb, k8sClient, params); err != nil {
-		fmt.Printf("Unable to determine status: %s\n", err)
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to disable ClusterMesh: %s", err))
 		return
 	}
 }
