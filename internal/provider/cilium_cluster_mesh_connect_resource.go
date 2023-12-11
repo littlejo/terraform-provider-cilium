@@ -46,7 +46,7 @@ type CiliumClusterMeshConnectResourceModel struct {
 }
 
 func (r *CiliumClusterMeshConnectResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_clustermesh_connect"
+	resp.TypeName = req.ProviderTypeName + "_clustermesh_connection"
 }
 
 func (r *CiliumClusterMeshConnectResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {

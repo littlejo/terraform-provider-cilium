@@ -51,7 +51,7 @@ type CiliumInstallResourceModel struct {
 }
 
 func (r *CiliumInstallResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_install"
+	resp.TypeName = req.ProviderTypeName
 }
 
 func (r *CiliumInstallResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
