@@ -152,12 +152,12 @@ func (r *CiliumInstallResource) Create(ctx context.Context, req resource.CreateR
 
 	installer, err := install.NewK8sInstaller(k8sClient, params)
 	if err != nil {
-		fmt.Printf("unable to create Cilium installer: %v\n", err)
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to create Cilium installer: %s", err))
 		return
 	}
 
 	if err := installer.InstallWithHelm(context.Background(), r.client); err != nil {
-		fmt.Printf("Unable to install Cilium: %v\n", err)
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to install Cilium: %s", err))
 		return
 	}
 	// For the purposes of this example code, hardcoding a response value to
@@ -252,11 +252,11 @@ func (r *CiliumInstallResource) Update(ctx context.Context, req resource.UpdateR
 
 	installer, err := install.NewK8sInstaller(k8sClient, params)
 	if err != nil {
-		fmt.Printf("Unable to upgrade Cilium: %s\n", err)
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to upgrade Cilium: %s", err))
 		return
 	}
 	if err := installer.UpgradeWithHelm(context.Background(), k8sClient); err != nil {
-		fmt.Printf("Unable to upgrade Cilium: %s\n", err)
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to upgrade Cilium: %s", err))
 		return
 	}
 
@@ -290,13 +290,14 @@ func (r *CiliumInstallResource) Delete(ctx context.Context, req resource.DeleteR
 		Writer:          os.Stdout,
 	}, version)
 	if err != nil {
-		fmt.Printf("⚠ ️ Failed to initialize connectivity test uninstaller: %s\n", err)
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("⚠ ️ Failed to initialize connectivity test uninstaller: %s", err))
+		return
 	} else {
 		cc.UninstallResources(ctxb, params.Wait)
 	}
 	uninstaller := install.NewK8sUninstaller(k8sClient, params)
 	if err := uninstaller.UninstallWithHelm(ctxb, k8sClient.HelmActionConfig); err != nil {
-		fmt.Printf("⚠ ️ Unable to uninstall Cilium: %s\n", err)
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("⚠ ️ Unable to uninstall Cilium: %s", err))
 		return
 	}
 }
