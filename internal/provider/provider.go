@@ -6,7 +6,6 @@ package provider
 import (
 	"context"
 	"fmt"
-	//"net/http"
 
 	"github.com/cilium/cilium-cli/k8s"
 
@@ -30,7 +29,9 @@ type CiliumProvider struct {
 
 // ScaffoldingProviderModel describes the provider data model.
 type CiliumProviderModel struct {
-	Endpoint types.String `tfsdk:"endpoint"`
+	Context    types.String `tfsdk:"context"`
+	ConfigPath types.String `tfsdk:"config_path"`
+	Namespace  types.String `tfsdk:"namespace"`
 }
 
 func (p *CiliumProvider) Metadata(ctx context.Context, req provider.MetadataRequest, resp *provider.MetadataResponse) {
@@ -41,8 +42,16 @@ func (p *CiliumProvider) Metadata(ctx context.Context, req provider.MetadataRequ
 func (p *CiliumProvider) Schema(ctx context.Context, req provider.SchemaRequest, resp *provider.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
-			"endpoint": schema.StringAttribute{
-				MarkdownDescription: "Example provider attribute",
+			"context": schema.StringAttribute{
+				MarkdownDescription: "Context of kubeconfig file",
+				Optional:            true,
+			},
+			"config_path": schema.StringAttribute{
+				MarkdownDescription: "A path to a kube config file.",
+				Optional:            true,
+			},
+			"namespace": schema.StringAttribute{
+				MarkdownDescription: "Namespace to install cilium",
 				Optional:            true,
 			},
 		},
@@ -58,7 +67,14 @@ func (p *CiliumProvider) Configure(ctx context.Context, req provider.ConfigureRe
 		return
 	}
 
-	client, err := k8s.NewClient("", "", "kube-system")
+	namespace := data.Namespace.ValueString()
+	if namespace == "" {
+		namespace = "kube-system"
+	}
+	config_path := data.ConfigPath.ValueString()
+	context := data.Context.ValueString()
+
+	client, err := k8s.NewClient(context, config_path, namespace)
 	if err != nil {
 		fmt.Printf("unable to create Kubernetes client: %v\n", err)
 		return
