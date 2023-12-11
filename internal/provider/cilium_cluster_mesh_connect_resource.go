@@ -130,7 +130,8 @@ func (r *CiliumClusterMeshConnectResource) Create(ctx context.Context, req resou
 
 	cm := clustermesh.NewK8sClusterMesh(k8sClient, params)
 	if err := cm.ConnectWithHelm(context.Background()); err != nil {
-		fmt.Printf("Unable to connect cluster: %v\n", err)
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to connect cluster: %s", err))
+		return
 	}
 
 	// For the purposes of this example code, hardcoding a response value to
@@ -164,7 +165,7 @@ func (r *CiliumClusterMeshConnectResource) Read(ctx context.Context, req resourc
 
 	cm := clustermesh.NewK8sClusterMesh(k8sClient, params)
 	if _, err := cm.Status(context.Background()); err != nil {
-		fmt.Printf("Unable to determine status: %s\n", err)
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to determine status: %s", err))
 		return
 	}
 
@@ -191,7 +192,8 @@ func (r *CiliumClusterMeshConnectResource) Update(ctx context.Context, req resou
 
 	cm := clustermesh.NewK8sClusterMesh(k8sClient, params)
 	if err := cm.ConnectWithHelm(context.Background()); err != nil {
-		fmt.Printf("Unable to connect cluster: %v\n", err)
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to connect clusters: %s", err))
+		return
 	}
 
 	// Save updated data into Terraform state
@@ -217,7 +219,7 @@ func (r *CiliumClusterMeshConnectResource) Delete(ctx context.Context, req resou
 
 	cm := clustermesh.NewK8sClusterMesh(k8sClient, params)
 	if err := cm.DisconnectWithHelm(context.Background()); err != nil {
-		fmt.Printf("Unable to disconnect clusters: %s\n", err)
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to disconnect clusters: %s", err))
 		return
 	}
 }
