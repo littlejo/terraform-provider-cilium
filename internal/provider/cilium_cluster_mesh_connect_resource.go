@@ -146,7 +146,7 @@ func (r *CiliumClusterMeshConnectResource) Create(ctx context.Context, req resou
 }
 
 func (r *CiliumClusterMeshConnectResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var data CiliumClusterMeshEnableResourceModel
+	var data CiliumClusterMeshConnectResourceModel
 	var params = clustermesh.Parameters{
 		Writer: os.Stdout,
 	}
