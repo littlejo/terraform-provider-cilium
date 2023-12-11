@@ -166,6 +166,7 @@ func (r *CiliumClusterMeshEnableResource) Read(ctx context.Context, req resource
 	cm := clustermesh.NewK8sClusterMesh(k8sClient, params)
 	if _, err := cm.Status(context.Background()); err != nil {
 		fmt.Printf("Unable to determine status: %s\n", err)
+		resp.State.RemoveResource(ctx)
 		return
 	}
 
