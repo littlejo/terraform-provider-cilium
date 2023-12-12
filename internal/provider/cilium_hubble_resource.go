@@ -14,9 +14,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
@@ -37,10 +37,10 @@ type CiliumHubbleResource struct {
 
 // CiliumHubbleResourceModel describes the resource data model.
 type CiliumHubbleResourceModel struct {
-	Relay      types.Bool   `tfsdk:"relay"`
-	UI         types.Bool   `tfsdk:"ui"`
-	Namespace  types.String `tfsdk:"namespace"`
-	Id         types.String `tfsdk:"id"`
+	Relay     types.Bool   `tfsdk:"relay"`
+	UI        types.Bool   `tfsdk:"ui"`
+	Namespace types.String `tfsdk:"namespace"`
+	Id        types.String `tfsdk:"id"`
 }
 
 func (r *CiliumHubbleResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
