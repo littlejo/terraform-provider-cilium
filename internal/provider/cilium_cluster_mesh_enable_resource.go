@@ -30,12 +30,12 @@ func NewCiliumClusterMeshEnableResource() resource.Resource {
 	return &CiliumClusterMeshEnableResource{}
 }
 
-// ExampleResource defines the resource implementation.
+// CiliumClusterMeshEnableResource defines the resource implementation.
 type CiliumClusterMeshEnableResource struct {
 	client *k8s.Client
 }
 
-// ExampleResourceModel describes the resource data model.
+// CiliumClusterMeshEnableResourceModel describes the resource data model.
 type CiliumClusterMeshEnableResourceModel struct {
 	EnableExternalWorkloads types.Bool   `tfsdk:"enable_external_workloads"`
 	EnableKVStoreMesh       types.Bool   `tfsdk:"enable_kv_store_mesh"`
@@ -51,7 +51,7 @@ func (r *CiliumClusterMeshEnableResource) Metadata(ctx context.Context, req reso
 func (r *CiliumClusterMeshEnableResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
-		MarkdownDescription: "Install resource",
+		MarkdownDescription: "Cluster Mesh resource. This is equivalent to cilium cli: `cilium clustermesh enable` and `cilium clustermesh disable`: It manages the activation of Cluster Mesh on one Kubernetes cluster.",
 
 		Attributes: map[string]schema.Attribute{
 			"enable_external_workloads": schema.BoolAttribute{
@@ -80,7 +80,7 @@ func (r *CiliumClusterMeshEnableResource) Schema(ctx context.Context, req resour
 			},
 			"id": schema.StringAttribute{
 				Computed:            true,
-				MarkdownDescription: "Example identifier",
+				MarkdownDescription: "Cilium ClusterMesh identifier",
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},

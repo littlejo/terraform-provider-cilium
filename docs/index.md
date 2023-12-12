@@ -13,8 +13,8 @@ description: |-
 ## Example Usage
 
 ```terraform
-provider "scaffolding" {
-  # example configuration here
+provider "cilium" {
+  config_path = "${path.module}/kubeconfig"
 }
 ```
 
@@ -24,5 +24,5 @@ provider "scaffolding" {
 ### Optional
 
 - `config_path` (String) A path to a kube config file.
-- `context` (String) Context of kubeconfig file
-- `namespace` (String) Namespace to install cilium
+- `context` (String) Context of kubeconfig file.
+- `namespace` (String) Namespace to install cilium (kube-system by default).

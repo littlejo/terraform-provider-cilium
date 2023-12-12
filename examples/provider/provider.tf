@@ -1,3 +1,3 @@
-provider "scaffolding" {
-  # example configuration here
+provider "cilium" {
+  config_path = "${path.module}/kubeconfig"
 }

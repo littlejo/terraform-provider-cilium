@@ -16,10 +16,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-// Ensure ScaffoldingProvider satisfies various provider interfaces.
+// Ensure CiliumProvider satisfies various provider interfaces.
 var _ provider.Provider = &CiliumProvider{}
 
-// ScaffoldingProvider defines the provider implementation.
+// CiliumProvider defines the provider implementation.
 type CiliumProvider struct {
 	// version is set to the provider version on release, "dev" when the
 	// provider is built and ran locally, and "test" when running acceptance
@@ -27,7 +27,7 @@ type CiliumProvider struct {
 	version string
 }
 
-// ScaffoldingProviderModel describes the provider data model.
+// CiliumProviderModel describes the provider data model.
 type CiliumProviderModel struct {
 	Context    types.String `tfsdk:"context"`
 	ConfigPath types.String `tfsdk:"config_path"`
@@ -43,7 +43,7 @@ func (p *CiliumProvider) Schema(ctx context.Context, req provider.SchemaRequest,
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
 			"context": schema.StringAttribute{
-				MarkdownDescription: "Context of kubeconfig file",
+				MarkdownDescription: "Context of kubeconfig file.",
 				Optional:            true,
 			},
 			"config_path": schema.StringAttribute{
@@ -51,7 +51,7 @@ func (p *CiliumProvider) Schema(ctx context.Context, req provider.SchemaRequest,
 				Optional:            true,
 			},
 			"namespace": schema.StringAttribute{
-				MarkdownDescription: "Namespace to install cilium",
+				MarkdownDescription: "Namespace to install cilium (kube-system by default).",
 				Optional:            true,
 			},
 		},

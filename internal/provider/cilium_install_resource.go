@@ -35,12 +35,12 @@ func NewCiliumInstallResource() resource.Resource {
 	return &CiliumInstallResource{}
 }
 
-// ExampleResource defines the resource implementation.
+// CiliumInstallResource defines the resource implementation.
 type CiliumInstallResource struct {
 	client *k8s.Client
 }
 
-// ExampleResourceModel describes the resource data model.
+// CiliumInstallResourceModel describes the resource data model.
 type CiliumInstallResourceModel struct {
 	HelmSet    types.List   `tfsdk:"helm_set"`
 	Version    types.String `tfsdk:"version"`
@@ -57,7 +57,7 @@ func (r *CiliumInstallResource) Metadata(ctx context.Context, req resource.Metad
 func (r *CiliumInstallResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
-		MarkdownDescription: "Install resource",
+		MarkdownDescription: "Install resource for Cilium. This is equivalent to cilium cli: `cilium install`, `cilium upgrade` and `cilium uninstall`: It manages cilium helm chart",
 
 		Attributes: map[string]schema.Attribute{
 			"helm_set": schema.ListAttribute{
@@ -92,7 +92,7 @@ func (r *CiliumInstallResource) Schema(ctx context.Context, req resource.SchemaR
 			},
 			"id": schema.StringAttribute{
 				Computed:            true,
-				MarkdownDescription: "Example identifier",
+				MarkdownDescription: "Cilium install identifier",
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},

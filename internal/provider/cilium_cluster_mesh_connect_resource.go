@@ -14,10 +14,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	//	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
-	//	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
@@ -31,12 +29,12 @@ func NewCiliumClusterMeshConnectResource() resource.Resource {
 	return &CiliumClusterMeshConnectResource{}
 }
 
-// ExampleResource defines the resource implementation.
+// CiliumClusterMeshConnectResource defines the resource implementation.
 type CiliumClusterMeshConnectResource struct {
 	client *k8s.Client
 }
 
-// ExampleResourceModel describes the resource data model.
+// CiliumClusterMeshConnectResourceModel describes the resource data model.
 type CiliumClusterMeshConnectResourceModel struct {
 	//SourceEndpoints      types.List `tfsdk:"source_endpoint"`
 	//DestinationEndpoints types.List `tfsdk:"destination_endpoint"`
@@ -52,7 +50,7 @@ func (r *CiliumClusterMeshConnectResource) Metadata(ctx context.Context, req res
 func (r *CiliumClusterMeshConnectResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
-		MarkdownDescription: "Install resource",
+		MarkdownDescription: "Cluster Mesh connection resource. This is equivalent to cilium cli: `cilium clustermesh connect` and `cilium clustermesh disconnect`: It manages the connections between two Kubernetes clusters.",
 
 		Attributes: map[string]schema.Attribute{
 			"destination_context": schema.StringAttribute{
@@ -82,7 +80,7 @@ func (r *CiliumClusterMeshConnectResource) Schema(ctx context.Context, req resou
 			},
 			"id": schema.StringAttribute{
 				Computed:            true,
-				MarkdownDescription: "Example identifier",
+				MarkdownDescription: "Cilium ClusterMesh Connection identifier",
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},

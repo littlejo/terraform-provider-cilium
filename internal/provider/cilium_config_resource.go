@@ -32,12 +32,12 @@ func NewCiliumConfigResource() resource.Resource {
 	return &CiliumConfigResource{}
 }
 
-// ExampleResource defines the resource implementation.
+// CiliumConfigResource defines the resource implementation.
 type CiliumConfigResource struct {
 	client *k8s.Client
 }
 
-// ExampleResourceModel describes the resource data model.
+// CiliumConfigResourceModel describes the resource data model.
 type CiliumConfigResourceModel struct {
 	Namespace types.String `tfsdk:"namespace"`
 	Restart   types.Bool   `tfsdk:"restart"`
@@ -53,7 +53,7 @@ func (r *CiliumConfigResource) Metadata(ctx context.Context, req resource.Metada
 func (r *CiliumConfigResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
-		MarkdownDescription: "Config resource",
+		MarkdownDescription: "Config resource for Cilium. This is equivalent to cilium cli: `cilium config`: It manages the cilium Kubernetes ConfigMap resource",
 
 		Attributes: map[string]schema.Attribute{
 			"namespace": schema.StringAttribute{
@@ -78,7 +78,7 @@ func (r *CiliumConfigResource) Schema(ctx context.Context, req resource.SchemaRe
 			},
 			"id": schema.StringAttribute{
 				Computed:            true,
-				MarkdownDescription: "Example identifier",
+				MarkdownDescription: "Cilium config identifier",
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
