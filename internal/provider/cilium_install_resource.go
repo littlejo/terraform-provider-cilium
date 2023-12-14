@@ -5,17 +5,17 @@ package provider
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"os"
-	"strings"
 
 	"github.com/cilium/cilium-cli/connectivity/check"
 	"github.com/cilium/cilium-cli/defaults"
 	"github.com/cilium/cilium-cli/install"
 	"github.com/cilium/cilium-cli/k8s"
-	"github.com/cilium/cilium-cli/status"
+	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/cli/values"
+	"helm.sh/helm/v3/pkg/release"
+	"k8s.io/cli-runtime/pkg/genericclioptions"
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -171,11 +171,27 @@ func (r *CiliumInstallResource) Create(ctx context.Context, req resource.CreateR
 	// Save data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
+func GetCurrentRelease(
+	k8sClient genericclioptions.RESTClientGetter,
+	namespace, name string,
+) (*release.Release, error) {
+	// Use the default Helm driver (Kubernetes secret).
+	helmDriver := ""
+	actionConfig := action.Configuration{}
+	logger := func(format string, v ...interface{}) {}
+	if err := actionConfig.Init(k8sClient, namespace, helmDriver, logger); err != nil {
+		return nil, err
+	}
+	currentRelease, err := actionConfig.Releases.Last(name)
+	if err != nil {
+		return nil, err
+	}
+	return currentRelease, nil
+}
 
 func (r *CiliumInstallResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data CiliumInstallResourceModel
 	k8sClient := r.client
-	var params = status.K8sStatusParameters{}
 
 	// Read Terraform prior state data into the model
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
@@ -185,35 +201,9 @@ func (r *CiliumInstallResource) Read(ctx context.Context, req resource.ReadReque
 	}
 
 	namespace := data.Namespace.ValueString()
-	params.Namespace = namespace
 
-	collector, err := status.NewK8sStatusCollector(k8sClient, params)
+	_, err := GetCurrentRelease(k8sClient.RESTClientGetter, namespace, "cilium")
 	if err != nil {
-		return
-	}
-
-	s, err := collector.Status(context.Background())
-	if err != nil {
-		// Report the most recent status even if an error occurred.
-		fmt.Fprint(os.Stderr, s.Format())
-		fmt.Printf("Unable to determine status: %s\n", err)
-		resp.State.RemoveResource(ctx)
-		return
-	}
-	if params.Output == status.OutputJSON {
-		jsonStatus, err := json.MarshalIndent(s, "", " ")
-		if err != nil {
-			// Report the most recent status even if an error occurred.
-			fmt.Fprint(os.Stderr, s.Format())
-			fmt.Printf("Unable to marshal status to JSON: %s\n", err)
-			return
-		}
-		fmt.Println(string(jsonStatus))
-	} else {
-		fmt.Print(s.Format())
-	}
-
-	if strings.Contains(s.Format(), "error") {
 		resp.State.RemoveResource(ctx)
 		return
 	}
