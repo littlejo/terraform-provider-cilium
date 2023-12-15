@@ -6,6 +6,7 @@ package provider
 import (
 	"context"
 	"fmt"
+	"os"
 
 	"github.com/cilium/cilium-cli/k8s"
 
@@ -73,6 +74,10 @@ func (p *CiliumProvider) Configure(ctx context.Context, req provider.ConfigureRe
 	}
 	config_path := data.ConfigPath.ValueString()
 	context := data.Context.ValueString()
+
+	if config_path != "" {
+		os.Setenv("KUBECONFIG", config_path)
+	}
 
 	client, err := k8s.NewClient(context, config_path, namespace)
 	if err != nil {
