@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/cilium/cilium-cli/clustermesh"
 	"github.com/cilium/cilium-cli/k8s"
@@ -162,6 +163,8 @@ func (r *CiliumClusterMeshEnableResource) Read(ctx context.Context, req resource
 
 	namespace := data.Namespace.ValueString()
 	params.Namespace = namespace
+	params.Wait = true
+	params.WaitDuration = 20 * time.Second
 
 	cm := clustermesh.NewK8sClusterMesh(k8sClient, params)
 	if _, err := cm.Status(context.Background()); err != nil {
