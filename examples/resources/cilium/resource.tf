@@ -1,10 +1,31 @@
-resource "cilium" "example" {
-  version = "1.14.4"
+resource "kind_cluster" "example" {
+  name = "test-cluster"
 
-  helm_set = [
-    "cluster.id=1",
-    "ipam.operator.clusterPoolIPv4PodCIDRList=10.10.0.0/16",
-    "cluster.name=cilium-clustermesh-1",
-    "clustermesh.maxConnectedClusters=511",
-  ]
+  kind_config {
+    kind        = "Cluster"
+    api_version = "kind.x-k8s.io/v1alpha4"
+
+    node {
+      role = "control-plane"
+    }
+
+    node {
+      role = "worker"
+    }
+
+    networking {
+      disable_default_cni = true
+    }
+  }
 }
+
+resource "cilium" "example" {
+  helm_set = [
+    "ipam.mode=kubernetes",
+    "ipam.operator.replicas=1",
+    "tunnel=vxlan",
+  ]
+  version = "1.14.4"
+}
+
+#Complete example: https://github.com/littlejo/terraform-kind-cilium
