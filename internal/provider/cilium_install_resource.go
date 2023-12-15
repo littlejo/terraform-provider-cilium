@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/cilium/cilium-cli/connectivity/check"
 	"github.com/cilium/cilium-cli/defaults"
@@ -126,8 +127,6 @@ func (r *CiliumInstallResource) Create(ctx context.Context, req resource.CreateR
 	k8sClient := r.client
 	var params = install.Parameters{Writer: os.Stdout}
 	var options values.Options
-	params.APIVersions = []string{"v1"}
-	params.HelmValuesSecretName = "cilium"
 
 	// Read Terraform plan data into the model
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
@@ -138,6 +137,8 @@ func (r *CiliumInstallResource) Create(ctx context.Context, req resource.CreateR
 	namespace := data.Namespace.ValueString()
 	params.Namespace = namespace
 	params.Version = data.Version.ValueString()
+	params.Wait = true
+	params.WaitDuration = 60 * time.Second
 
 	helmSet := make([]types.String, 0, len(data.HelmSet.Elements()))
 	data.HelmSet.ElementsAs(ctx, &helmSet, false)
@@ -228,6 +229,9 @@ func (r *CiliumInstallResource) Update(ctx context.Context, req resource.UpdateR
 	namespace := data.Namespace.ValueString()
 	params.Namespace = namespace
 	params.Version = data.Version.ValueString()
+	params.HelmReuseValues = true
+	params.Wait = true
+	params.WaitDuration = 60 * time.Second
 
 	helmSet := make([]types.String, 0, len(data.HelmSet.Elements()))
 	data.HelmSet.ElementsAs(ctx, &helmSet, false)
