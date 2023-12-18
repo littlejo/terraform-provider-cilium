@@ -7,12 +7,12 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"time"
 
 	"github.com/cilium/cilium-cli/connectivity/check"
 	"github.com/cilium/cilium-cli/defaults"
 	"github.com/cilium/cilium-cli/install"
 	"github.com/cilium/cilium-cli/k8s"
+	"github.com/cilium/cilium-cli/status"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/cli/values"
 	"helm.sh/helm/v3/pkg/release"
@@ -21,6 +21,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
@@ -48,6 +49,7 @@ type CiliumInstallResourceModel struct {
 	Namespace  types.String `tfsdk:"namespace"`
 	Repository types.String `tfsdk:"repository"`
 	DataPath   types.String `tfsdk:"data_path"`
+	Wait       types.Bool   `tfsdk:"wait"`
 	Id         types.String `tfsdk:"id"`
 }
 
@@ -90,6 +92,12 @@ func (r *CiliumInstallResource) Schema(ctx context.Context, req resource.SchemaR
 				Optional:            true,
 				Computed:            true,
 				Default:             stringdefault.StaticString(""),
+			},
+			"wait": schema.BoolAttribute{
+				MarkdownDescription: "Wait for Cilium status is ok",
+				Optional:            true,
+				Computed:            true,
+				Default:             booldefault.StaticBool(true),
 			},
 			"id": schema.StringAttribute{
 				Computed:            true,
@@ -137,8 +145,7 @@ func (r *CiliumInstallResource) Create(ctx context.Context, req resource.CreateR
 	namespace := data.Namespace.ValueString()
 	params.Namespace = namespace
 	params.Version = data.Version.ValueString()
-	params.Wait = true
-	params.WaitDuration = 60 * time.Second
+	wait := data.Wait.ValueBool()
 
 	helmSet := make([]types.String, 0, len(data.HelmSet.Elements()))
 	data.HelmSet.ElementsAs(ctx, &helmSet, false)
@@ -157,9 +164,15 @@ func (r *CiliumInstallResource) Create(ctx context.Context, req resource.CreateR
 		return
 	}
 
-	if err := installer.InstallWithHelm(context.Background(), r.client); err != nil {
+	if err := installer.InstallWithHelm(context.Background(), k8sClient); err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to install Cilium: %s", err))
 		return
+	}
+
+	if wait {
+		if err := r.Wait(namespace); err != nil {
+			return
+		}
 	}
 	// For the purposes of this example code, hardcoding a response value to
 	// save into the Terraform state.
@@ -172,6 +185,20 @@ func (r *CiliumInstallResource) Create(ctx context.Context, req resource.CreateR
 	// Save data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
+
+func (r *CiliumInstallResource) Wait(namespace string) (err error) {
+	var status_params = status.K8sStatusParameters{}
+	status_params.Namespace = namespace
+	status_params.Wait = true
+	status_params.WaitDuration = defaults.StatusWaitDuration
+	collector, err := status.NewK8sStatusCollector(r.client, status_params)
+	if err != nil {
+		return err
+	}
+	_, err = collector.Status(context.Background())
+	return err
+}
+
 func GetCurrentRelease(
 	k8sClient genericclioptions.RESTClientGetter,
 	namespace, name string,
@@ -229,10 +256,8 @@ func (r *CiliumInstallResource) Update(ctx context.Context, req resource.UpdateR
 	namespace := data.Namespace.ValueString()
 	params.Namespace = namespace
 	params.Version = data.Version.ValueString()
+	wait := data.Wait.ValueBool()
 	params.HelmReuseValues = true
-	params.Wait = true
-	params.WaitDuration = 60 * time.Second
-
 	helmSet := make([]types.String, 0, len(data.HelmSet.Elements()))
 	data.HelmSet.ElementsAs(ctx, &helmSet, false)
 
@@ -252,6 +277,11 @@ func (r *CiliumInstallResource) Update(ctx context.Context, req resource.UpdateR
 	if err := installer.UpgradeWithHelm(context.Background(), k8sClient); err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to upgrade Cilium: %s", err))
 		return
+	}
+	if wait {
+		if err := r.Wait(namespace); err != nil {
+			return
+		}
 	}
 
 	// Save updated data into Terraform state
