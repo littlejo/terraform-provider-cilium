@@ -94,7 +94,7 @@ func (r *CiliumInstallResource) Schema(ctx context.Context, req resource.SchemaR
 				Default:             stringdefault.StaticString(""),
 			},
 			"wait": schema.BoolAttribute{
-				MarkdownDescription: "Wait for install of Cilium",
+				MarkdownDescription: "Wait for Cilium status is ok",
 				Optional:            true,
 				Computed:            true,
 				Default:             booldefault.StaticBool(true),
@@ -195,8 +195,8 @@ func (r *CiliumInstallResource) Wait(namespace string) (err error) {
 	if err != nil {
 		return err
 	}
-	collector.Status(context.Background())
-	return nil
+	_, err = collector.Status(context.Background())
+	return err
 }
 
 func GetCurrentRelease(
