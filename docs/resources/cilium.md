@@ -56,6 +56,7 @@ resource "cilium" "example" {
 - `namespace` (String) Namespace in which to install
 - `repository` (String) Helm chart repository to download Cilium charts from
 - `version` (String) Version of Cilium
+- `wait` (Boolean) Wait for Cilium status is ok
 
 ### Read-Only
 
