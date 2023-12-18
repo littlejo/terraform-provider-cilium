@@ -55,6 +55,7 @@ resource "cilium" "example" {
 - `helm_set` (List of String) Set helm values on the command line (can specify multiple or separate values with commas: key1=val1,key2=val2
 - `namespace` (String) Namespace in which to install
 - `repository` (String) Helm chart repository to download Cilium charts from
+- `values` (String) values in raw yaml to pass to helm.
 - `version` (String) Version of Cilium
 - `wait` (Boolean) Wait for Cilium status is ok
 
