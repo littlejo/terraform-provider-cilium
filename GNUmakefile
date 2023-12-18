@@ -13,6 +13,9 @@ default: install
 build:
 	go build -o ${BINARY}
 
+build-linux:
+	env GOOS=linux GOARCH=amd64 go build -o ${BINARY}
+
 doc:
 	go generate
 
