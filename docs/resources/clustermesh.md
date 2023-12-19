@@ -14,12 +14,12 @@ Cluster Mesh resource. This is equivalent to cilium cli: `cilium clustermesh ena
 
 ```terraform
 resource "cilium" "example" {
-  helm_set = [
+  set = [
     "cluster.name=clustermesh1",
     "cluster.id=1",
     "ipam.mode=kubernetes",
   ]
-  version = "1.14.4"
+  version = "1.14.5"
 }
 
 resource "cilium_clustermesh" "example" {

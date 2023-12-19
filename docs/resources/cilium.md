@@ -35,12 +35,12 @@ resource "kind_cluster" "example" {
 }
 
 resource "cilium" "example" {
-  helm_set = [
+  set = [
     "ipam.mode=kubernetes",
     "ipam.operator.replicas=1",
     "tunnel=vxlan",
   ]
-  version = "1.14.4"
+  version = "1.14.5"
 }
 
 #Complete example: https://github.com/littlejo/terraform-kind-cilium
@@ -52,11 +52,11 @@ resource "cilium" "example" {
 ### Optional
 
 - `data_path` (String) Datapath mode to use { tunnel | native | aws-eni | gke | azure | aks-byocni } (default: autodetected).
-- `helm_set` (List of String) Set helm values on the command line (can specify multiple or separate values with commas: key1=val1,key2=val2
 - `namespace` (String) Namespace in which to install
 - `repository` (String) Helm chart repository to download Cilium charts from
 - `reset` (Boolean) When upgrading, reset the helm values to the ones built into the chart
 - `reuse` (Boolean) When upgrading, reuse the helm values from the latest release unless any overrides from are set from other flags. This option takes precedence over HelmResetValues
+- `set` (List of String) Set helm values on the command line (can specify multiple or separate values with commas: key1=val1,key2=val2
 - `values` (String) values in raw yaml to pass to helm.
 - `version` (String) Version of Cilium
 - `wait` (Boolean) Wait for Cilium status is ok

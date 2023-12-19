@@ -20,12 +20,12 @@ resource "kind_cluster" "example" {
 }
 
 resource "cilium" "example" {
-  helm_set = [
+  set = [
     "ipam.mode=kubernetes",
     "ipam.operator.replicas=1",
     "tunnel=vxlan",
   ]
-  version = "1.14.4"
+  version = "1.14.5"
 }
 
 #Complete example: https://github.com/littlejo/terraform-kind-cilium

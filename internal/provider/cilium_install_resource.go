@@ -45,7 +45,7 @@ type CiliumInstallResource struct {
 
 // CiliumInstallResourceModel describes the resource data model.
 type CiliumInstallResourceModel struct {
-	HelmSet    types.List   `tfsdk:"helm_set"`
+	HelmSet    types.List   `tfsdk:"set"`
 	Values     types.String `tfsdk:"values"`
 	Version    types.String `tfsdk:"version"`
 	Namespace  types.String `tfsdk:"namespace"`
@@ -67,7 +67,7 @@ func (r *CiliumInstallResource) Schema(ctx context.Context, req resource.SchemaR
 		MarkdownDescription: "Install resource for Cilium. This is equivalent to cilium cli: `cilium install`, `cilium upgrade` and `cilium uninstall`: It manages cilium helm chart",
 
 		Attributes: map[string]schema.Attribute{
-			"helm_set": schema.ListAttribute{
+			"set": schema.ListAttribute{
 				ElementType:         types.StringType,
 				MarkdownDescription: "Set helm values on the command line (can specify multiple or separate values with commas: key1=val1,key2=val2",
 				Optional:            true,
