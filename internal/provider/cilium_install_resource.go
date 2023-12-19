@@ -22,6 +22,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
@@ -45,6 +46,7 @@ type CiliumInstallResource struct {
 // CiliumInstallResourceModel describes the resource data model.
 type CiliumInstallResourceModel struct {
 	HelmSet    types.List   `tfsdk:"helm_set"`
+	Values     types.String `tfsdk:"values"`
 	Version    types.String `tfsdk:"version"`
 	Namespace  types.String `tfsdk:"namespace"`
 	Repository types.String `tfsdk:"repository"`
@@ -68,6 +70,13 @@ func (r *CiliumInstallResource) Schema(ctx context.Context, req resource.SchemaR
 				MarkdownDescription: "Set helm values on the command line (can specify multiple or separate values with commas: key1=val1,key2=val2",
 				Optional:            true,
 				Computed:            true,
+				Default:             listdefault.StaticValue(types.ListNull(types.StringType)),
+			},
+			"values": schema.StringAttribute{
+				MarkdownDescription: "values in raw yaml to pass to helm.",
+				Optional:            true,
+				Computed:            true,
+				Default:             stringdefault.StaticString(""),
 			},
 			"version": schema.StringAttribute{
 				MarkdownDescription: "Version of Cilium",
@@ -156,6 +165,26 @@ func (r *CiliumInstallResource) Create(ctx context.Context, req resource.CreateR
 	}
 
 	options.Values = h
+
+	values := data.Values.ValueString()
+
+	if values != "" {
+		f, err := os.CreateTemp("", ".values.*.yaml")
+		if err != nil {
+			resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to create Cilium installer: %s", err))
+		}
+		defer os.Remove(f.Name())
+
+		if _, err := f.Write([]byte(values)); err != nil {
+			f.Close()
+			resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to create Cilium installer: %s", err))
+		}
+		if err := f.Close(); err != nil {
+			resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to create Cilium installer: %s", err))
+		}
+		options.ValueFiles = []string{f.Name()}
+	}
+
 	params.HelmOpts = options
 
 	installer, err := install.NewK8sInstaller(k8sClient, params)
@@ -267,6 +296,25 @@ func (r *CiliumInstallResource) Update(ctx context.Context, req resource.UpdateR
 	}
 
 	options.Values = h
+
+	values := data.Values.ValueString()
+
+	if values != "" {
+		f, err := os.CreateTemp("", ".values.*.yaml")
+		if err != nil {
+			resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to create Cilium installer: %s", err))
+		}
+		defer os.Remove(f.Name())
+
+		if _, err := f.Write([]byte(values)); err != nil {
+			f.Close()
+			resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to create Cilium installer: %s", err))
+		}
+		if err := f.Close(); err != nil {
+			resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to create Cilium installer: %s", err))
+		}
+		options.ValueFiles = []string{f.Name()}
+	}
 	params.HelmOpts = options
 
 	installer, err := install.NewK8sInstaller(k8sClient, params)
