@@ -52,6 +52,8 @@ type CiliumInstallResourceModel struct {
 	Repository types.String `tfsdk:"repository"`
 	DataPath   types.String `tfsdk:"data_path"`
 	Wait       types.Bool   `tfsdk:"wait"`
+	Reuse      types.Bool   `tfsdk:"reuse"`
+	Reset      types.Bool   `tfsdk:"reset"`
 	Id         types.String `tfsdk:"id"`
 }
 
@@ -101,6 +103,18 @@ func (r *CiliumInstallResource) Schema(ctx context.Context, req resource.SchemaR
 				Optional:            true,
 				Computed:            true,
 				Default:             stringdefault.StaticString(""),
+			},
+			"reuse": schema.BoolAttribute{
+				MarkdownDescription: "When upgrading, reuse the helm values from the latest release unless any overrides from are set from other flags. This option takes precedence over HelmResetValues",
+				Optional:            true,
+				Computed:            true,
+				Default:             booldefault.StaticBool(true),
+			},
+			"reset": schema.BoolAttribute{
+				MarkdownDescription: "When upgrading, reset the helm values to the ones built into the chart",
+				Optional:            true,
+				Computed:            true,
+				Default:             booldefault.StaticBool(false),
 			},
 			"wait": schema.BoolAttribute{
 				MarkdownDescription: "Wait for Cilium status is ok",
@@ -285,8 +299,9 @@ func (r *CiliumInstallResource) Update(ctx context.Context, req resource.UpdateR
 	namespace := data.Namespace.ValueString()
 	params.Namespace = namespace
 	params.Version = data.Version.ValueString()
+	params.HelmResetValues = data.Reset.ValueBool()
+	params.HelmReuseValues = data.Reuse.ValueBool()
 	wait := data.Wait.ValueBool()
-	params.HelmReuseValues = true
 	helmSet := make([]types.String, 0, len(data.HelmSet.Elements()))
 	data.HelmSet.ElementsAs(ctx, &helmSet, false)
 
