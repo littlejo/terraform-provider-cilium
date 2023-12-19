@@ -1,8 +1,6 @@
 module github.com/hashicorp/terraform-provider-scaffolding-framework
 
-go 1.21.4
-
-toolchain go1.21.5
+go 1.21.5
 
 require (
 	github.com/cilium/cilium-cli v0.15.17
