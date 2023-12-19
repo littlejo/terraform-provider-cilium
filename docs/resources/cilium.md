@@ -57,6 +57,7 @@ resource "cilium" "example" {
 - `repository` (String) Helm chart repository to download Cilium charts from
 - `reset` (Boolean) When upgrading, reset the helm values to the ones built into the chart
 - `reuse` (Boolean) When upgrading, reuse the helm values from the latest release unless any overrides from are set from other flags. This option takes precedence over HelmResetValues
+- `values` (String) values in raw yaml to pass to helm.
 - `version` (String) Version of Cilium
 - `wait` (Boolean) Wait for Cilium status is ok
 
