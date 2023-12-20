@@ -42,6 +42,7 @@ type CiliumClusterMeshEnableResourceModel struct {
 	EnableKVStoreMesh       types.Bool   `tfsdk:"enable_kv_store_mesh"`
 	ServiceType             types.String `tfsdk:"service_type"`
 	Namespace               types.String `tfsdk:"namespace"`
+	Wait                    types.Bool   `tfsdk:"wait"`
 	Id                      types.String `tfsdk:"id"`
 }
 
@@ -72,6 +73,12 @@ func (r *CiliumClusterMeshEnableResource) Schema(ctx context.Context, req resour
 				Optional:            true,
 				Computed:            true,
 				Default:             stringdefault.StaticString(""),
+			},
+			"wait": schema.BoolAttribute{
+				MarkdownDescription: "Wait Cluster Mesh status is ok",
+				Optional:            true,
+				Computed:            true,
+				Default:             booldefault.StaticBool(true),
 			},
 			"namespace": schema.StringAttribute{
 				MarkdownDescription: "Namespace in which to install",
@@ -128,11 +135,19 @@ func (r *CiliumClusterMeshEnableResource) Create(ctx context.Context, req resour
 	params.ServiceType = data.ServiceType.ValueString()
 	params.EnableKVStoreMesh = data.EnableKVStoreMesh.ValueBool() //
 	params.EnableExternalWorkloads = data.EnableExternalWorkloads.ValueBool()
+	wait := data.Wait.ValueBool()
 
 	ctxb := context.Background()
 	if err := clustermesh.EnableWithHelm(ctxb, k8sClient, params); err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to enable ClusterMesh: %s", err))
 		return
+	}
+
+	if wait {
+		if err := r.Wait(namespace); err != nil {
+			resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to enable ClusterMesh: %s", err))
+			return
+		}
 	}
 
 	// For the purposes of this example code, hardcoding a response value to
@@ -145,6 +160,18 @@ func (r *CiliumClusterMeshEnableResource) Create(ctx context.Context, req resour
 
 	// Save data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+func (r *CiliumClusterMeshEnableResource) Wait(namespace string) (err error) {
+	var params = clustermesh.Parameters{Writer: os.Stdout}
+	params.Namespace = namespace
+	params.Wait = true
+	params.WaitDuration = 2 * time.Minute
+	cm := clustermesh.NewK8sClusterMesh(r.client, params)
+	if _, err := cm.Status(context.Background()); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (r *CiliumClusterMeshEnableResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
@@ -195,11 +222,19 @@ func (r *CiliumClusterMeshEnableResource) Update(ctx context.Context, req resour
 	params.ServiceType = data.ServiceType.ValueString()
 	params.EnableKVStoreMesh = data.EnableKVStoreMesh.ValueBool() //
 	params.EnableExternalWorkloads = data.EnableExternalWorkloads.ValueBool()
+	wait := data.Wait.ValueBool()
 
 	ctxb := context.Background()
 	if err := clustermesh.EnableWithHelm(ctxb, k8sClient, params); err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to enable ClusterMesh: %s", err))
 		return
+	}
+
+	if wait {
+		if err := r.Wait(namespace); err != nil {
+			resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to enable ClusterMesh: %s", err))
+			return
+		}
 	}
 
 	// Save updated data into Terraform state

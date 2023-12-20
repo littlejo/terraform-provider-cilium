@@ -41,6 +41,7 @@ resource "cilium_clustermesh" "example" {
 - `enable_kv_store_mesh` (Boolean) Enable kvstoremesh, an extension which caches remote cluster information in the local kvstore (Cilium >=1.14 only)
 - `namespace` (String) Namespace in which to install
 - `service_type` (String) Type of Kubernetes service to expose control plane { LoadBalancer | NodePort | ClusterIP }
+- `wait` (Boolean) Wait Cluster Mesh status is ok
 
 ### Read-Only
 
