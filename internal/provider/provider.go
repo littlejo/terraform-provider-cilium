@@ -105,7 +105,7 @@ func (p *CiliumProvider) Resources(ctx context.Context) []func() resource.Resour
 
 func (p *CiliumProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
 	return []func() datasource.DataSource{
-		//NewExampleDataSource,
+		NewCiliumHelmValuesDataSource,
 	}
 }
 
