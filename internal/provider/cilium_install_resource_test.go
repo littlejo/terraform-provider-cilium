@@ -1,0 +1,53 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
+package provider
+
+import (
+	"fmt"
+	"testing"
+
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+)
+
+func TestAccCiliumInstallResource(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			// Create and Read testing
+			{
+				Config: testAccCiliumInstallResourceConfig("1.14.4"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("cilium.test", "namespace", "kube-system"),
+					resource.TestCheckResourceAttr("cilium.test", "version", "1.14.4"),
+					resource.TestCheckResourceAttr("cilium.test", "id", "cilium"),
+				),
+			},
+			// ImportState testing
+			{
+				ResourceName: "cilium.test",
+				ImportState:  true,
+				//ImportStateVerify: true,
+				ImportStateVerifyIgnore: []string{"namespace"},
+			},
+			// Update and Read testing
+			{
+				Config: testAccCiliumInstallResourceConfig("1.14.5"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("cilium.test", "version", "1.14.5"),
+					resource.TestCheckResourceAttr("cilium.test", "id", "cilium"),
+				),
+			},
+			// Delete testing automatically occurs in TestCase
+		},
+	})
+}
+
+func testAccCiliumInstallResourceConfig(version string) string {
+	return fmt.Sprintf(`
+resource "cilium" "test" {
+  version = %[1]q
+}
+`, version)
+}
