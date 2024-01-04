@@ -1,64 +1,112 @@
-# Terraform Provider Scaffolding (Terraform Plugin Framework)
+Terraform Cilium Provider (Experimental)
+==================
 
-_This template repository is built on the [Terraform Plugin Framework](https://github.com/hashicorp/terraform-plugin-framework). The template repository built on the [Terraform Plugin SDK](https://github.com/hashicorp/terraform-plugin-sdk) can be found at [terraform-provider-scaffolding](https://github.com/hashicorp/terraform-provider-scaffolding). See [Which SDK Should I Use?](https://developer.hashicorp.com/terraform/plugin/framework-benefits) in the Terraform documentation for additional information._
+The Cilium Provider allows Terraform to manage [Cilium](https://cilium.io/) resources.
 
-This repository is a *template* for a [Terraform](https://www.terraform.io) provider. It is intended as a starting point for creating Terraform providers, containing:
+- Website: [registry.terraform.io](https://registry.terraform.io/providers/littlejo/cilium/latest/docs)
 
-- A resource and a data source (`internal/provider/`),
-- Examples (`examples/`) and generated documentation (`docs/`),
-- Miscellaneous meta files.
+Requirements
+------------
 
-These files contain boilerplate code that you will need to edit to create your own Terraform provider. Tutorials for creating Terraform providers can be found on the [HashiCorp Developer](https://developer.hashicorp.com/terraform/tutorials/providers-plugin-framework) platform. _Terraform Plugin Framework specific guides are titled accordingly._
+- [Terraform](https://www.terraform.io/downloads.html) 1.5.X
+- [Go](https://golang.org/doc/install) 1.21 (to build the provider plugin)
 
-Please see the [GitHub template repository documentation](https://help.github.com/en/github/creating-cloning-and-archiving-repositories/creating-a-repository-from-a-template) for how to create a new repository from this template on GitHub.
+Building The Provider
+---------------------
 
-Once you've written your provider, you'll want to [publish it on the Terraform Registry](https://developer.hashicorp.com/terraform/registry/providers/publishing) so that others can use it.
-
-## Requirements
-
-- [Terraform](https://developer.hashicorp.com/terraform/downloads) >= 1.0
-- [Go](https://golang.org/doc/install) >= 1.20
-
-## Building The Provider
-
-1. Clone the repository
-1. Enter the repository directory
-1. Build the provider using the Go `install` command:
-
-```shell
-go install
+```sh
+$ git clone https://github.com/littlejo/terraform-provider-cilium.git
+$ cd terraform-provider-cilium
 ```
 
-## Adding Dependencies
+Enter the provider directory and build the provider
 
-This provider uses [Go modules](https://github.com/golang/go/wiki/Modules).
-Please see the Go documentation for the most up to date information about using Go modules.
-
-To add a new dependency `github.com/author/dependency` to your Terraform provider:
-
-```shell
-go get github.com/author/dependency
-go mod tidy
+```sh
+$ make build
 ```
 
-Then commit the changes to `go.mod` and `go.sum`.
+Using the provider
+----------------------
 
-## Using the provider
+Please see the documentation in the [Terraform registry](https://registry.terraform.io/providers/littlejo/cilium/latest/docs).
 
-Fill this in for each provider
+Or you can browse the documentation within this repo [here](https://github.com/littlejo/terraform-provider-cilium/tree/main/docs).
 
-## Developing the Provider
+Using the locally built provider
+----------------------
 
-If you wish to work on the provider, you'll first need [Go](http://www.golang.org) installed on your machine (see [Requirements](#requirements) above).
+If you wish to test the provider from the local version you just built, you can try the following method.
 
-To compile the provider, run `go install`. This will build the provider and put the provider binary in the `$GOPATH/bin` directory.
+First install the Terraform Provider binary into your local plugin repository:
 
-To generate or update documentation, run `go generate`.
-
-In order to run the full suite of Acceptance tests, run `make testacc`.
-
-*Note:* Acceptance tests create real resources, and often cost money to run.
-
-```shell
-make testacc
+```sh
+# Set your target environment (OS_architecture): linux_amd64, darwin_amd64...
+$ vim GNUmakefile
+$ make install
 ```
+
+Then create a Terraform configuration using this exact provider:
+
+```sh
+$ mkdir ~/test-terraform-provider-cilium
+$ cd ~/test-terraform-provider-cilium
+$ cat > main.tf <<EOF
+# Configure the cilium Provider
+terraform {
+  required_providers {
+    cilium = {
+      source = "terraform.local/local/cilium"
+      version = "0.0.1"
+    }
+  }
+}
+
+provider "cilium" {
+}
+EOF
+
+# Initialize your project and remove existing dependencies lock file
+$ rm .terraform.lock.hcl && terraform init
+...
+
+# Apply your resources & datasources
+$ terraform apply
+...
+```
+
+
+Developing the Provider
+---------------------------
+
+If you wish to work on the provider, you'll first need [Go](http://www.golang.org) installed on your machine (version 1.21+ is *required*). You'll also need to correctly setup a [GOPATH](http://golang.org/doc/code.html#GOPATH), as well as adding `$GOPATH/bin` to your `$PATH`.
+
+To compile the provider, run `make build`. This will build the provider and put the provider binary in the `$GOPATH/bin` directory.
+
+```sh
+$ make build
+```
+
+Testing the Provider
+--------------------
+
+In order to test the provider, you can simply run `make test`.
+
+```sh
+$ make test
+```
+
+In order to run the full suite of Acceptance tests you will need to create a kubernetes cluster like kind. You also can test on some examples:
+* https://github.com/littlejo/terraform-kind-cilium
+* https://github.com/littlejo/terraform-kind-cilium-clustermesh
+
+
+# Contributing
+
+Please read the [contributing guide](./CONTRIBUTING.md) to learn about how you can contribute to the Cilium Terraform provider.<br/>
+There is no small contribution, don't hesitate!
+
+Our awesome contributors:
+
+<a href="https://github.com/littlejo/terraform-provider-cilium/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=littlejo/terraform-provider-cilium" />
+</a>

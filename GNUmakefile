@@ -1,4 +1,5 @@
 TEST?=$$(go list ./... | grep -v 'vendor')
+GOFMT_FILES?=$$(find . -name '*.go' |grep -v vendor)
 HOSTNAME=terraform.local
 # HOSTNAME=registry.terraform.io
 NAMESPACE=local
@@ -15,6 +16,9 @@ build:
 
 build-linux:
 	env GOOS=linux GOARCH=amd64 go build -o ${BINARY}
+
+fmt:
+	gofmt -w $(GOFMT_FILES)
 
 doc:
 	go generate
