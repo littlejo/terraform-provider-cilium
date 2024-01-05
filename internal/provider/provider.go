@@ -35,6 +35,10 @@ type CiliumProviderModel struct {
 	Namespace  types.String `tfsdk:"namespace"`
 }
 
+func ConcatDefault(text string, d string) string {
+	return fmt.Sprintf("%s (Default: `%s`).", text, d)
+}
+
 func (p *CiliumProvider) Metadata(ctx context.Context, req provider.MetadataRequest, resp *provider.MetadataResponse) {
 	resp.TypeName = "cilium"
 	resp.Version = p.version
@@ -44,15 +48,15 @@ func (p *CiliumProvider) Schema(ctx context.Context, req provider.SchemaRequest,
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
 			"context": schema.StringAttribute{
-				MarkdownDescription: "Context of kubeconfig file.",
+				MarkdownDescription: ConcatDefault("Context of kubeconfig file", "default context"),
 				Optional:            true,
 			},
 			"config_path": schema.StringAttribute{
-				MarkdownDescription: "A path to a kube config file.",
+				MarkdownDescription: ConcatDefault("A path to a kube config file", "~/.kube/config"),
 				Optional:            true,
 			},
 			"namespace": schema.StringAttribute{
-				MarkdownDescription: "Namespace to install cilium (kube-system by default).",
+				MarkdownDescription: ConcatDefault("Namespace to install cilium", "kube-system"),
 				Optional:            true,
 			},
 		},

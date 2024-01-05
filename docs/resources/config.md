@@ -29,8 +29,8 @@ resource "cilium_config" "example" {
 
 ### Optional
 
-- `namespace` (String) Namespace in which to install
-- `restart` (Boolean) Restart Cilium pods
+- `namespace` (String) Namespace in which to install (Default: `kube-system`).
+- `restart` (Boolean) Restart Cilium pods (Default: `true`).
 
 ### Read-Only
 

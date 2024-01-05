@@ -54,19 +54,19 @@ func (r *CiliumHubbleResource) Schema(ctx context.Context, req resource.SchemaRe
 
 		Attributes: map[string]schema.Attribute{
 			"ui": schema.BoolAttribute{
-				MarkdownDescription: "Enable Hubble UI (Default: false)",
+				MarkdownDescription: ConcatDefault("Enable Hubble UI", "false"),
 				Optional:            true,
 				Computed:            true,
 				Default:             booldefault.StaticBool(false),
 			},
 			"relay": schema.BoolAttribute{
-				MarkdownDescription: "Deploy Hubble Relay (Default: true)",
+				MarkdownDescription: ConcatDefault("Deploy Hubble Relay", "true"),
 				Optional:            true,
 				Computed:            true,
 				Default:             booldefault.StaticBool(true),
 			},
 			"namespace": schema.StringAttribute{
-				MarkdownDescription: "Namespace in which to install",
+				MarkdownDescription: ConcatDefault("Namespace in which to install", "kube-system"),
 				Optional:            true,
 				Computed:            true,
 				Default:             stringdefault.StaticString("kube-system"),

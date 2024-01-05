@@ -29,7 +29,7 @@ provider "cilium" {
 ### Optional
 
 - `destination_context` (String) Kubernetes configuration context of destination cluster
-- `namespace` (String) Namespace in which to install
+- `namespace` (String) Namespace in which to install (Default: `kube-system`).
 
 ### Read-Only
 

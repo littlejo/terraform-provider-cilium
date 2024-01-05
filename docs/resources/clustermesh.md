@@ -37,11 +37,11 @@ resource "cilium_clustermesh" "example" {
 
 ### Optional
 
-- `enable_external_workloads` (Boolean) Enable support for external workloads, such as VMs
-- `enable_kv_store_mesh` (Boolean) Enable kvstoremesh, an extension which caches remote cluster information in the local kvstore (Cilium >=1.14 only)
-- `namespace` (String) Namespace in which to install
-- `service_type` (String) Type of Kubernetes service to expose control plane { LoadBalancer | NodePort | ClusterIP }
-- `wait` (Boolean) Wait Cluster Mesh status is ok
+- `enable_external_workloads` (Boolean) Enable support for external workloads, such as VMs (Default: `false`).
+- `enable_kv_store_mesh` (Boolean) Enable kvstoremesh, an extension which caches remote cluster information in the local kvstore (Cilium >=1.14 only) (Default: `false`).
+- `namespace` (String) Namespace in which to install (Default: `kube-system`).
+- `service_type` (String) Type of Kubernetes service to expose control plane { LoadBalancer | NodePort | ClusterIP } (Default: `autodetected`).
+- `wait` (Boolean) Wait Cluster Mesh status is ok (Default: `true`).
 
 ### Read-Only
 

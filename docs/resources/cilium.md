@@ -51,15 +51,15 @@ resource "cilium" "example" {
 
 ### Optional
 
-- `data_path` (String) Datapath mode to use { tunnel | native | aws-eni | gke | azure | aks-byocni } (default: autodetected).
-- `namespace` (String) Namespace in which to install
-- `repository` (String) Helm chart repository to download Cilium charts from
-- `reset` (Boolean) When upgrading, reset the helm values to the ones built into the chart
-- `reuse` (Boolean) When upgrading, reuse the helm values from the latest release unless any overrides from are set from other flags. This option takes precedence over HelmResetValues
-- `set` (List of String) Set helm values on the command line (can specify multiple or separate values with commas: key1=val1,key2=val2
-- `values` (String) values in raw yaml to pass to helm.
-- `version` (String) Version of Cilium
-- `wait` (Boolean) Wait for Cilium status is ok
+- `data_path` (String) Datapath mode to use { tunnel | native | aws-eni | gke | azure | aks-byocni } (Default: `autodetected`).
+- `namespace` (String) Namespace in which to install (Default: `kube-system`).
+- `repository` (String) Helm chart repository to download Cilium charts from (Default: `https://helm.cilium.io`).
+- `reset` (Boolean) When upgrading, reset the helm values to the ones built into the chart (Default: `false`).
+- `reuse` (Boolean) When upgrading, reuse the helm values from the latest release unless any overrides from are set from other flags. This option takes precedence over HelmResetValues (Default: `true`).
+- `set` (List of String) Set helm values on the command line (can specify multiple or separate values with commas: key1=val1,key2=val2 (Default: `[]`).
+- `values` (String) values in raw yaml to pass to helm. (Default: `empty`).
+- `version` (String) Version of Cilium (Default: `v1.14.4`).
+- `wait` (Boolean) Wait for Cilium status is ok (Default: `true`).
 
 ### Read-Only
 

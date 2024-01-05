@@ -57,31 +57,31 @@ func (r *CiliumClusterMeshEnableResource) Schema(ctx context.Context, req resour
 
 		Attributes: map[string]schema.Attribute{
 			"enable_external_workloads": schema.BoolAttribute{
-				MarkdownDescription: "Enable support for external workloads, such as VMs",
+				MarkdownDescription: ConcatDefault("Enable support for external workloads, such as VMs", "false"),
 				Optional:            true,
 				Computed:            true,
 				Default:             booldefault.StaticBool(false),
 			},
 			"enable_kv_store_mesh": schema.BoolAttribute{
-				MarkdownDescription: "Enable kvstoremesh, an extension which caches remote cluster information in the local kvstore (Cilium >=1.14 only)",
+				MarkdownDescription: ConcatDefault("Enable kvstoremesh, an extension which caches remote cluster information in the local kvstore (Cilium >=1.14 only)", "false"),
 				Optional:            true,
 				Computed:            true,
 				Default:             booldefault.StaticBool(false),
 			},
 			"service_type": schema.StringAttribute{
-				MarkdownDescription: "Type of Kubernetes service to expose control plane { LoadBalancer | NodePort | ClusterIP }",
+				MarkdownDescription: ConcatDefault("Type of Kubernetes service to expose control plane { LoadBalancer | NodePort | ClusterIP }", "autodetected"),
 				Optional:            true,
 				Computed:            true,
 				Default:             stringdefault.StaticString(""),
 			},
 			"wait": schema.BoolAttribute{
-				MarkdownDescription: "Wait Cluster Mesh status is ok",
+				MarkdownDescription: ConcatDefault("Wait Cluster Mesh status is ok", "true"),
 				Optional:            true,
 				Computed:            true,
 				Default:             booldefault.StaticBool(true),
 			},
 			"namespace": schema.StringAttribute{
-				MarkdownDescription: "Namespace in which to install",
+				MarkdownDescription: ConcatDefault("Namespace in which to install", "kube-system"),
 				Optional:            true,
 				Computed:            true,
 				Default:             stringdefault.StaticString("kube-system"),
