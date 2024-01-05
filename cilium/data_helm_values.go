@@ -8,7 +8,7 @@ import (
 	"fmt"
 
 	"github.com/cilium/cilium-cli/k8s"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 	"helm.sh/helm/v3/pkg/action"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
