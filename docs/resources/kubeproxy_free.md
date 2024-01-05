@@ -3,12 +3,12 @@
 page_title: "cilium_kubeproxy_free Resource - terraform-provider-cilium"
 subcategory: ""
 description: |-
-  Disable Kube-Proxy DaemonSet, equivalent to: kubectl -n kube-system patch daemonset kube-proxy -p '"spec": {"template": {"spec": {"nodeSelector": {"non-existing": "true"}}}}'
+  Disable Kube-Proxy DaemonSet, equivalent to: kubectl -n kube-system patch daemonset kube-proxy -p '"spec": {"template": {"spec": {"nodeSelector": {"non-existing": "true"}}}}'.
 ---
 
 # cilium_kubeproxy_free (Resource)
 
-Disable Kube-Proxy DaemonSet, equivalent to: kubectl -n kube-system patch daemonset kube-proxy -p '"spec": {"template": {"spec": {"nodeSelector": {"non-existing": "true"}}}}'
+Disable Kube-Proxy DaemonSet, equivalent to: `kubectl -n kube-system patch daemonset kube-proxy -p '"spec": {"template": {"spec": {"nodeSelector": {"non-existing": "true"}}}}'`.
 
 
 
@@ -17,9 +17,9 @@ Disable Kube-Proxy DaemonSet, equivalent to: kubectl -n kube-system patch daemon
 
 ### Optional
 
-- `name` (String) Name of DaemonSet (Default: kube-proxy)
-- `namespace` (String) Namespace in which to install (Default: kube-system)
+- `name` (String) Name of DaemonSet (Default: `kube-proxy`).
+- `namespace` (String) Namespace in which to install (Default: `kube-system`).
 
 ### Read-Only
 
-- `id` (String) Cilium install identifier
+- `id` (String) kube-proxy free identifier.

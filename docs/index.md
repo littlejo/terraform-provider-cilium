@@ -23,6 +23,6 @@ provider "cilium" {
 
 ### Optional
 
-- `config_path` (String) A path to a kube config file.
-- `context` (String) Context of kubeconfig file.
-- `namespace` (String) Namespace to install cilium (kube-system by default).
+- `config_path` (String) A path to a kube config file (Default: `~/.kube/config`).
+- `context` (String) Context of kubeconfig file (Default: `default context`).
+- `namespace` (String) Namespace to install cilium (Default: `kube-system`).

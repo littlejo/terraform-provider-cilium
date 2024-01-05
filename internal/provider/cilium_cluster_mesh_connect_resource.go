@@ -74,7 +74,7 @@ func (r *CiliumClusterMeshConnectResource) Schema(ctx context.Context, req resou
 			//	Default:             listdefault.StaticValue([]),
 			//},
 			"namespace": schema.StringAttribute{
-				MarkdownDescription: "Namespace in which to install",
+				MarkdownDescription: ConcatDefault("Namespace in which to install", "kube-system"),
 				Optional:            true,
 				Computed:            true,
 				Default:             stringdefault.StaticString("kube-system"),

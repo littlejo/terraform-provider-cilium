@@ -23,9 +23,9 @@ resource "cilium_hubble" "example" {
 
 ### Optional
 
-- `namespace` (String) Namespace in which to install
-- `relay` (Boolean) Deploy Hubble Relay (Default: true)
-- `ui` (Boolean) Enable Hubble UI (Default: false)
+- `namespace` (String) Namespace in which to install (Default: `kube-system`).
+- `relay` (Boolean) Deploy Hubble Relay (Default: `true`).
+- `ui` (Boolean) Enable Hubble UI (Default: `false`).
 
 ### Read-Only
 

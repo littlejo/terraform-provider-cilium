@@ -48,24 +48,24 @@ func (r *CiliumKubeProxyDisabledResource) Metadata(ctx context.Context, req reso
 func (r *CiliumKubeProxyDisabledResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
-		MarkdownDescription: "Disable Kube-Proxy DaemonSet, equivalent to: kubectl -n kube-system patch daemonset kube-proxy -p '\"spec\": {\"template\": {\"spec\": {\"nodeSelector\": {\"non-existing\": \"true\"}}}}'",
+		MarkdownDescription: "Disable Kube-Proxy DaemonSet, equivalent to: `kubectl -n kube-system patch daemonset kube-proxy -p '\"spec\": {\"template\": {\"spec\": {\"nodeSelector\": {\"non-existing\": \"true\"}}}}'`.",
 
 		Attributes: map[string]schema.Attribute{
 			"name": schema.StringAttribute{
-				MarkdownDescription: "Name of DaemonSet (Default: kube-proxy)",
+				MarkdownDescription: ConcatDefault("Name of DaemonSet", "kube-proxy"),
 				Optional:            true,
 				Computed:            true,
 				Default:             stringdefault.StaticString("kube-proxy"),
 			},
 			"namespace": schema.StringAttribute{
-				MarkdownDescription: "Namespace in which to install (Default: kube-system)",
+				MarkdownDescription: ConcatDefault("Namespace in which to install", "kube-system"),
 				Optional:            true,
 				Computed:            true,
 				Default:             stringdefault.StaticString("kube-system"),
 			},
 			"id": schema.StringAttribute{
 				Computed:            true,
-				MarkdownDescription: "Cilium install identifier",
+				MarkdownDescription: "kube-proxy free identifier.",
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},

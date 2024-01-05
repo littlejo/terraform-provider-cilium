@@ -47,11 +47,11 @@ func (d *CiliumHelmValuesDataSource) Schema(ctx context.Context, req datasource.
 
 		Attributes: map[string]schema.Attribute{
 			"release": schema.StringAttribute{
-				MarkdownDescription: "Helm release",
+				MarkdownDescription: ConcatDefault("Helm release", "cilium"),
 				Optional:            true,
 			},
 			"namespace": schema.StringAttribute{
-				MarkdownDescription: "Namespace of cilium",
+				MarkdownDescription: ConcatDefault("Namespace of cilium", "kube-system"),
 				Optional:            true,
 			},
 			"yaml": schema.StringAttribute{

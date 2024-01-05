@@ -57,13 +57,13 @@ func (r *CiliumConfigResource) Schema(ctx context.Context, req resource.SchemaRe
 
 		Attributes: map[string]schema.Attribute{
 			"namespace": schema.StringAttribute{
-				MarkdownDescription: "Namespace in which to install",
+				MarkdownDescription: ConcatDefault("Namespace in which to install", "kube-system"),
 				Optional:            true,
 				Computed:            true,
 				Default:             stringdefault.StaticString("kube-system"),
 			},
 			"restart": schema.BoolAttribute{
-				MarkdownDescription: "Restart Cilium pods",
+				MarkdownDescription: ConcatDefault("Restart Cilium pods", "true"),
 				Optional:            true,
 				Computed:            true,
 				Default:             booldefault.StaticBool(true),
