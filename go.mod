@@ -1,6 +1,6 @@
 module github.com/littlejo/terraform-provider-cilium
 
-go 1.21.5
+go 1.21.6
 
 require (
 	github.com/cilium/cilium-cli v0.15.19
