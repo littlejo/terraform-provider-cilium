@@ -58,7 +58,7 @@ resource "cilium" "example" {
 - `reuse` (Boolean) When upgrading, reuse the helm values from the latest release unless any overrides from are set from other flags. This option takes precedence over HelmResetValues (Default: `true`).
 - `set` (List of String) Set helm values on the command line (can specify multiple or separate values with commas: key1=val1,key2=val2 (Default: `[]`).
 - `values` (String) values in raw yaml to pass to helm. (Default: `empty`).
-- `version` (String) Version of Cilium (Default: `v1.14.4`).
+- `version` (String) Version of Cilium (Default: `v1.14.5`).
 - `wait` (Boolean) Wait for Cilium status is ok (Default: `true`).
 
 ### Read-Only
