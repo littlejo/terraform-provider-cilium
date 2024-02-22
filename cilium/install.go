@@ -13,6 +13,7 @@ import (
 	"github.com/cilium/cilium-cli/install"
 	"github.com/cilium/cilium-cli/k8s"
 	"github.com/cilium/cilium-cli/status"
+	"gopkg.in/yaml.v3"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/cli/values"
 	"helm.sh/helm/v3/pkg/release"
@@ -55,6 +56,7 @@ type CiliumInstallResourceModel struct {
 	Reuse      types.Bool   `tfsdk:"reuse"`
 	Reset      types.Bool   `tfsdk:"reset"`
 	Id         types.String `tfsdk:"id"`
+	HelmValues types.String `tfsdk:"helm_values"`
 }
 
 func (r *CiliumInstallResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -128,6 +130,10 @@ func (r *CiliumInstallResource) Schema(ctx context.Context, req resource.SchemaR
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
+			},
+			"helm_values": schema.StringAttribute{
+				Computed:            true,
+				MarkdownDescription: "Helm values (`helm get values -n kube-system cilium`)",
 			},
 		},
 	}
@@ -220,6 +226,12 @@ func (r *CiliumInstallResource) Create(ctx context.Context, req resource.CreateR
 	// For the purposes of this example code, hardcoding a response value to
 	// save into the Terraform state.
 	data.Id = types.StringValue("cilium")
+	helm_values, err := GetHelmValues(k8sClient.RESTClientGetter, namespace, "cilium")
+	if err != nil {
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to install Cilium: %s", err))
+		return
+	}
+	data.HelmValues = types.StringValue(helm_values)
 
 	// Write logs using the tflog package
 	// Documentation: https://terraform.io/plugin/log
@@ -260,6 +272,30 @@ func GetCurrentRelease(
 	return currentRelease, nil
 }
 
+func GetHelmValues(
+	k8sClient genericclioptions.RESTClientGetter,
+	namespace, name string,
+) (string, error) {
+	helmDriver := ""
+	actionConfig := action.Configuration{}
+	logger := func(format string, v ...interface{}) {}
+	if err := actionConfig.Init(k8sClient, namespace, helmDriver, logger); err != nil {
+		return "", err
+	}
+	client := action.NewGetValues(&actionConfig)
+
+	vals, err := client.Run(name)
+	if err != nil {
+		return "", err
+	}
+
+	yaml, err := yaml.Marshal(vals)
+	if err != nil {
+		return "", err
+	}
+	return string(yaml), nil
+}
+
 func (r *CiliumInstallResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data CiliumInstallResourceModel
 	k8sClient := r.client
@@ -278,6 +314,12 @@ func (r *CiliumInstallResource) Read(ctx context.Context, req resource.ReadReque
 		resp.State.RemoveResource(ctx)
 		return
 	}
+	helm_values, err := GetHelmValues(k8sClient.RESTClientGetter, namespace, "cilium")
+	if err != nil {
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read tfstate: %s", err))
+		return
+	}
+	data.HelmValues = types.StringValue(helm_values)
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -347,6 +389,12 @@ func (r *CiliumInstallResource) Update(ctx context.Context, req resource.UpdateR
 		}
 	}
 
+	helm_values, err := GetHelmValues(k8sClient.RESTClientGetter, namespace, "cilium")
+	if err != nil {
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to upgrade Cilium: %s", err))
+		return
+	}
+	data.HelmValues = types.StringValue(helm_values)
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
