@@ -65,3 +65,4 @@ resource "cilium" "example" {
 ### Read-Only
 
 - `id` (String) Cilium install identifier
+- `helm_values` (String) Helm values (`helm get values -n kube-system cilium`)
