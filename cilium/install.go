@@ -296,6 +296,26 @@ func GetHelmValues(
 	return string(yaml), nil
 }
 
+func GetMetadata(
+	k8sClient genericclioptions.RESTClientGetter,
+	namespace, name string,
+) (string, string, error) {
+	helmDriver := ""
+	actionConfig := action.Configuration{}
+	logger := func(format string, v ...interface{}) {}
+	if err := actionConfig.Init(k8sClient, namespace, helmDriver, logger); err != nil {
+		return "", "", err
+	}
+	client := action.NewGetMetadata(&actionConfig)
+
+	vals, err := client.Run(name)
+	if err != nil {
+		return "", "", err
+	}
+
+	return vals.AppVersion, vals.Namespace, nil
+}
+
 func (r *CiliumInstallResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data CiliumInstallResourceModel
 	k8sClient := r.client
@@ -319,7 +339,14 @@ func (r *CiliumInstallResource) Read(ctx context.Context, req resource.ReadReque
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read tfstate: %s", err))
 		return
 	}
+	version, ns, err := GetMetadata(k8sClient.RESTClientGetter, namespace, "cilium")
+	if err != nil {
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read tfstate: %s", err))
+		return
+	}
 	data.HelmValues = types.StringValue(helm_values)
+	data.Namespace = types.StringValue(ns)
+	data.Version = types.StringValue(version)
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)

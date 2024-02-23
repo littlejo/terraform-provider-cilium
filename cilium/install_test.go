@@ -26,10 +26,10 @@ func TestAccCiliumInstallResource(t *testing.T) {
 			},
 			// ImportState testing
 			{
-				ResourceName: "cilium.test",
-				ImportState:  true,
-				//ImportStateVerify: true,
-				ImportStateVerifyIgnore: []string{"namespace"},
+				ResourceName:            "cilium.test",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"data_path", "repository", "reset", "reuse", "values", "wait"},
 			},
 			// Update and Read testing
 			{
