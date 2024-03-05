@@ -17,7 +17,7 @@ func TestAccCiliumInstallResource(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Create and Read testing
 			{
-				Config: testAccCiliumInstallResourceConfig("1.14.4"),
+				Config: testAccCiliumInstallResourceConfig("1.15.0"),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("cilium.test", "namespace", "kube-system"),
 					resource.TestCheckResourceAttr("cilium.test", "version", "1.14.4"),
@@ -33,7 +33,7 @@ func TestAccCiliumInstallResource(t *testing.T) {
 			},
 			// Update and Read testing
 			{
-				Config: testAccCiliumInstallResourceConfig("1.14.5"),
+				Config: testAccCiliumInstallResourceConfig("1.15.1"),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("cilium.test", "version", "1.14.5"),
 					resource.TestCheckResourceAttr("cilium.test", "id", "cilium"),
