@@ -443,7 +443,6 @@ func (r *CiliumInstallResource) Delete(ctx context.Context, req resource.DeleteR
 	params.TestNamespace = defaults.ConnectivityCheckNamespace
 	params.Wait = true
 	ctxb := context.Background()
-	version := data.Version.ValueString()
 
 	cc, err := check.NewConnectivityTest(k8sClient, check.Parameters{
 		CiliumNamespace: namespace,
