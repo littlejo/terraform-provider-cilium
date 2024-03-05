@@ -442,6 +442,7 @@ func (r *CiliumInstallResource) Delete(ctx context.Context, req resource.DeleteR
 	params.Namespace = namespace
 	params.TestNamespace = defaults.ConnectivityCheckNamespace
 	params.Wait = true
+	params.Timeout = defaults.UninstallTimeout
 	ctxb := context.Background()
 	version := data.Version.ValueString()
 
