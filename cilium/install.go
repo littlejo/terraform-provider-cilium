@@ -450,7 +450,7 @@ func (r *CiliumInstallResource) Delete(ctx context.Context, req resource.DeleteR
 		TestNamespace:   params.TestNamespace,
 		FlowValidation:  check.FlowValidationModeDisabled,
 		Writer:          os.Stdout,
-	}, version)
+	}, defaults.CLIVersion)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("⚠ ️ Failed to initialize connectivity test uninstaller: %s", err))
 		return
