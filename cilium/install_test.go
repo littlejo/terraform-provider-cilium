@@ -35,7 +35,7 @@ func TestAccCiliumInstallResource(t *testing.T) {
 			{
 				Config: testAccCiliumInstallResourceConfig("1.15.1"),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("cilium.test", "version", "1.14.5"),
+					resource.TestCheckResourceAttr("cilium.test", "version", "1.15.1"),
 					resource.TestCheckResourceAttr("cilium.test", "id", "cilium"),
 				),
 			},
