@@ -33,7 +33,7 @@ func TestAccCiliumInstallResource(t *testing.T) {
 			},
 			// Update and Read testing
 			{
-				Config: testAccCiliumInstallResourceConfig("1.14.4", `["ipam.mode=kubernetes"]`),
+				Config: testAccCiliumInstallResourceConfig("1.14.4", `["debug.enabled=true"]`),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("cilium.test", "version", "1.14.4"),
 					resource.TestCheckResourceAttr("cilium.test", "id", "cilium"),
