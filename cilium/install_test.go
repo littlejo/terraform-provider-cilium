@@ -48,7 +48,7 @@ func testAccCiliumInstallResourceConfig(version string, set string) string {
 	return fmt.Sprintf(`
 resource "cilium" "test" {
   version = %[1]q
-  set     = %[2]
+  set     = %[2]s
 }
 `, version, set)
 }
