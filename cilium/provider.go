@@ -30,9 +30,10 @@ type CiliumProvider struct {
 
 // CiliumProviderModel describes the provider data model.
 type CiliumProviderModel struct {
-	Context    types.String `tfsdk:"context"`
-	ConfigPath types.String `tfsdk:"config_path"`
-	Namespace  types.String `tfsdk:"namespace"`
+	Context       types.String `tfsdk:"context"`
+	ConfigPath    types.String `tfsdk:"config_path"`
+	ConfigContent types.String `tfsdk:"config_content"`
+	Namespace     types.String `tfsdk:"namespace"`
 }
 
 func ConcatDefault(text string, d string) string {
@@ -53,6 +54,10 @@ func (p *CiliumProvider) Schema(ctx context.Context, req provider.SchemaRequest,
 			},
 			"config_path": schema.StringAttribute{
 				MarkdownDescription: ConcatDefault("A path to a kube config file", "~/.kube/config"),
+				Optional:            true,
+			},
+			"config_content": schema.StringAttribute{
+				MarkdownDescription: ConcatDefault("The content of kube config file", ""),
 				Optional:            true,
 			},
 			"namespace": schema.StringAttribute{
@@ -78,8 +83,24 @@ func (p *CiliumProvider) Configure(ctx context.Context, req provider.ConfigureRe
 	}
 	config_path := data.ConfigPath.ValueString()
 	context := data.Context.ValueString()
+	config_content := data.ConfigContent.ValueString()
 
 	if config_path != "" {
+		os.Setenv("KUBECONFIG", config_path)
+	}
+
+	if config_content != "" {
+		f, err := os.CreateTemp("", "kubeconfig")
+		if err != nil {
+			panic(err)
+		}
+		if _, err := f.Write([]byte(config_content)); err != nil {
+			panic(err)
+		}
+		if err := f.Close(); err != nil {
+			panic(err)
+		}
+		config_path = f.Name()
 		os.Setenv("KUBECONFIG", config_path)
 	}
 
