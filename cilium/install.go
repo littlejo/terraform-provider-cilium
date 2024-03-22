@@ -17,7 +17,6 @@ import (
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/cli/values"
 	"helm.sh/helm/v3/pkg/release"
-	"k8s.io/cli-runtime/pkg/genericclioptions"
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -226,7 +225,7 @@ func (r *CiliumInstallResource) Create(ctx context.Context, req resource.CreateR
 	// For the purposes of this example code, hardcoding a response value to
 	// save into the Terraform state.
 	data.Id = types.StringValue("cilium")
-	helm_values, err := GetHelmValues(k8sClient.RESTClientGetter, namespace, "cilium")
+	helm_values, err := GetHelmValues(k8sClient, namespace, "cilium")
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to install Cilium: %s", err))
 		return
@@ -255,14 +254,14 @@ func (r *CiliumInstallResource) Wait(namespace string) (err error) {
 }
 
 func GetCurrentRelease(
-	k8sClient genericclioptions.RESTClientGetter,
+	k8sClient *k8s.Client,
 	namespace, name string,
 ) (*release.Release, error) {
 	// Use the default Helm driver (Kubernetes secret).
 	helmDriver := ""
 	actionConfig := action.Configuration{}
 	logger := func(format string, v ...interface{}) {}
-	if err := actionConfig.Init(k8sClient, namespace, helmDriver, logger); err != nil {
+	if err := actionConfig.Init(k8sClient.RESTClientGetter, namespace, helmDriver, logger); err != nil {
 		return nil, err
 	}
 	currentRelease, err := actionConfig.Releases.Last(name)
@@ -273,13 +272,13 @@ func GetCurrentRelease(
 }
 
 func GetHelmValues(
-	k8sClient genericclioptions.RESTClientGetter,
+	k8sClient *k8s.Client,
 	namespace, name string,
 ) (string, error) {
 	helmDriver := ""
 	actionConfig := action.Configuration{}
 	logger := func(format string, v ...interface{}) {}
-	if err := actionConfig.Init(k8sClient, namespace, helmDriver, logger); err != nil {
+	if err := actionConfig.Init(k8sClient.RESTClientGetter, namespace, helmDriver, logger); err != nil {
 		return "", err
 	}
 	client := action.NewGetValues(&actionConfig)
@@ -297,13 +296,13 @@ func GetHelmValues(
 }
 
 func GetMetadata(
-	k8sClient genericclioptions.RESTClientGetter,
+	k8sClient *k8s.Client,
 	namespace, name string,
 ) (string, string, error) {
 	helmDriver := ""
 	actionConfig := action.Configuration{}
 	logger := func(format string, v ...interface{}) {}
-	if err := actionConfig.Init(k8sClient, namespace, helmDriver, logger); err != nil {
+	if err := actionConfig.Init(k8sClient.RESTClientGetter, namespace, helmDriver, logger); err != nil {
 		return "", "", err
 	}
 	client := action.NewGetMetadata(&actionConfig)
@@ -327,19 +326,24 @@ func (r *CiliumInstallResource) Read(ctx context.Context, req resource.ReadReque
 		return
 	}
 
+	if k8sClient == nil {
+		resp.Diagnostics.AddError("Client Error", "Unable to connect to kubernetes")
+		return
+	}
+
 	namespace := data.Namespace.ValueString()
 
-	_, err := GetCurrentRelease(k8sClient.RESTClientGetter, namespace, "cilium")
+	_, err := GetCurrentRelease(k8sClient, namespace, "cilium")
 	if err != nil {
 		resp.State.RemoveResource(ctx)
 		return
 	}
-	helm_values, err := GetHelmValues(k8sClient.RESTClientGetter, namespace, "cilium")
+	helm_values, err := GetHelmValues(k8sClient, namespace, "cilium")
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read tfstate: %s", err))
 		return
 	}
-	version, ns, err := GetMetadata(k8sClient.RESTClientGetter, namespace, "cilium")
+	version, ns, err := GetMetadata(k8sClient, namespace, "cilium")
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read tfstate: %s", err))
 		return
@@ -416,7 +420,7 @@ func (r *CiliumInstallResource) Update(ctx context.Context, req resource.UpdateR
 		}
 	}
 
-	helm_values, err := GetHelmValues(k8sClient.RESTClientGetter, namespace, "cilium")
+	helm_values, err := GetHelmValues(k8sClient, namespace, "cilium")
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to upgrade Cilium: %s", err))
 		return
