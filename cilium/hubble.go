@@ -105,6 +105,10 @@ func (r *CiliumHubbleResource) Configure(ctx context.Context, req resource.Confi
 func (r *CiliumHubbleResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var data CiliumHubbleResourceModel
 	k8sClient := r.client
+	if k8sClient == nil {
+		resp.Diagnostics.AddError("Client Error", "Unable to connect to kubernetes")
+		return
+	}
 	var params = hubble.Parameters{Writer: os.Stdout}
 
 	// Read Terraform plan data into the model
@@ -151,6 +155,10 @@ func (r *CiliumHubbleResource) Read(ctx context.Context, req resource.ReadReques
 func (r *CiliumHubbleResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var data CiliumHubbleResourceModel
 	k8sClient := r.client
+	if k8sClient == nil {
+		resp.Diagnostics.AddError("Client Error", "Unable to connect to kubernetes")
+		return
+	}
 	var params = hubble.Parameters{Writer: os.Stdout}
 
 	// Read Terraform plan data into the model
@@ -177,6 +185,10 @@ func (r *CiliumHubbleResource) Update(ctx context.Context, req resource.UpdateRe
 func (r *CiliumHubbleResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data CiliumHubbleResourceModel
 	k8sClient := r.client
+	if k8sClient == nil {
+		resp.Diagnostics.AddError("Client Error", "Unable to connect to kubernetes")
+		return
+	}
 	var params = hubble.Parameters{Writer: os.Stdout}
 
 	// Read Terraform prior state data into the model

@@ -164,6 +164,10 @@ func (r *CiliumInstallResource) Create(ctx context.Context, req resource.CreateR
 	var params = install.Parameters{Writer: os.Stdout}
 	var options values.Options
 
+	if k8sClient == nil {
+		resp.Diagnostics.AddError("Client Error", "Unable to connect to kubernetes")
+		return
+	}
 	// Read Terraform plan data into the model
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
 
@@ -433,6 +437,10 @@ func (r *CiliumInstallResource) Update(ctx context.Context, req resource.UpdateR
 func (r *CiliumInstallResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data CiliumInstallResourceModel
 	k8sClient := r.client
+	if k8sClient == nil {
+		resp.Diagnostics.AddError("Client Error", "Unable to connect to kubernetes")
+		return
+	}
 	var params = install.UninstallParameters{Writer: os.Stdout}
 
 	// Read Terraform prior state data into the model
