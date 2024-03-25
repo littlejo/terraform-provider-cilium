@@ -113,6 +113,10 @@ func (r *CiliumClusterMeshConnectResource) Configure(ctx context.Context, req re
 func (r *CiliumClusterMeshConnectResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var data CiliumClusterMeshConnectResourceModel
 	k8sClient := r.client
+	if k8sClient == nil {
+		resp.Diagnostics.AddError("Client Error", "Unable to connect to kubernetes")
+		return
+	}
 	var params = clustermesh.Parameters{
 		Writer: os.Stdout,
 	}
@@ -151,6 +155,10 @@ func (r *CiliumClusterMeshConnectResource) Read(ctx context.Context, req resourc
 		Writer: os.Stdout,
 	}
 	k8sClient := r.client
+	if k8sClient == nil {
+		resp.Diagnostics.AddError("Client Error", "Unable to connect to kubernetes")
+		return
+	}
 
 	// Read Terraform prior state data into the model
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
@@ -177,6 +185,10 @@ func (r *CiliumClusterMeshConnectResource) Read(ctx context.Context, req resourc
 func (r *CiliumClusterMeshConnectResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var data CiliumClusterMeshConnectResourceModel
 	k8sClient := r.client
+	if k8sClient == nil {
+		resp.Diagnostics.AddError("Client Error", "Unable to connect to kubernetes")
+		return
+	}
 	var params = clustermesh.Parameters{
 		Writer: os.Stdout,
 	}
@@ -204,6 +216,10 @@ func (r *CiliumClusterMeshConnectResource) Update(ctx context.Context, req resou
 func (r *CiliumClusterMeshConnectResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data CiliumClusterMeshConnectResourceModel
 	k8sClient := r.client
+	if k8sClient == nil {
+		resp.Diagnostics.AddError("Client Error", "Unable to connect to kubernetes")
+		return
+	}
 	var params = clustermesh.Parameters{
 		Writer: os.Stdout,
 	}

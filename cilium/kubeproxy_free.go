@@ -125,6 +125,10 @@ func (r *CiliumKubeProxyDisabledResource) Configure(ctx context.Context, req res
 func (r *CiliumKubeProxyDisabledResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var data CiliumKubeProxyDisabledResourceModel
 	k8sClient := r.client
+	if k8sClient == nil {
+		resp.Diagnostics.AddError("Client Error", "Unable to connect to kubernetes")
+		return
+	}
 
 	// Read Terraform plan data into the model
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
@@ -161,6 +165,11 @@ func (r *CiliumKubeProxyDisabledResource) Create(ctx context.Context, req resour
 
 func (r *CiliumKubeProxyDisabledResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data CiliumKubeProxyDisabledResourceModel
+	k8sClient := r.client
+	if k8sClient == nil {
+		resp.Diagnostics.AddError("Client Error", "Unable to connect to kubernetes")
+		return
+	}
 
 	// Read Terraform prior state data into the model
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
@@ -182,6 +191,10 @@ func (r *CiliumKubeProxyDisabledResource) Read(ctx context.Context, req resource
 func (r *CiliumKubeProxyDisabledResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var data CiliumKubeProxyDisabledResourceModel
 	k8sClient := r.client
+	if k8sClient == nil {
+		resp.Diagnostics.AddError("Client Error", "Unable to connect to kubernetes")
+		return
+	}
 
 	// Read Terraform plan data into the model
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
@@ -211,6 +224,10 @@ func (r *CiliumKubeProxyDisabledResource) Update(ctx context.Context, req resour
 func (r *CiliumKubeProxyDisabledResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data CiliumKubeProxyDisabledResourceModel
 	k8sClient := r.client
+	if k8sClient == nil {
+		resp.Diagnostics.AddError("Client Error", "Unable to connect to kubernetes")
+		return
+	}
 
 	// Read Terraform prior state data into the model
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)

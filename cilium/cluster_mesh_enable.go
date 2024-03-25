@@ -124,6 +124,10 @@ func (r *CiliumClusterMeshEnableResource) Create(ctx context.Context, req resour
 		Writer: os.Stdout,
 	}
 
+	if k8sClient == nil {
+		resp.Diagnostics.AddError("Client Error", "Unable to connect to kubernetes")
+		return
+	}
 	// Read Terraform plan data into the model
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
 
@@ -180,6 +184,10 @@ func (r *CiliumClusterMeshEnableResource) Read(ctx context.Context, req resource
 		Writer: os.Stdout,
 	}
 	k8sClient := r.client
+	if k8sClient == nil {
+		resp.Diagnostics.AddError("Client Error", "Unable to connect to kubernetes")
+		return
+	}
 
 	// Read Terraform prior state data into the model
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
