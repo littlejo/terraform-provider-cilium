@@ -18,7 +18,7 @@ func TestAccCiliumHelmValuesDataSource(t *testing.T) {
 			{
 				Config: testAccCiliumHelmValuesDataSourceConfig(),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("data.cilium_helm_values.test", "yaml", "1.14.4"),
+					resource.TestCheckResourceAttr("data.cilium_helm_values.test", "yaml", "cluster:\n    name: kind-chart-testing\nipam:\n    mode: kubernetes\noperator:\n    replicas: 1\nroutingMode: tunnel\ntunnelProtocol: vxlan\n"),
 				),
 			},
 			// Delete testing automatically occurs in TestCase
