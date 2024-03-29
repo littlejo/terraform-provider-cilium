@@ -20,7 +20,6 @@ func TestAccCiliumKubeProxyDisabledResource(t *testing.T) {
 				Config: testAccCiliumKubeProxyDisabledResourceConfig("kube-system"),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("cilium_kubeproxy_free.test", "name", "kube-proxy"),
-					resource.TestCheckResourceAttr("cilium_kubeproxy_free.test", "namespace", "kube-system"),
 					resource.TestCheckResourceAttr("cilium_kubeproxy_free.test", "id", "cilium-kubeproxy-less"),
 				),
 			},
