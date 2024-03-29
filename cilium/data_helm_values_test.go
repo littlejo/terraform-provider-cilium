@@ -4,7 +4,6 @@
 package provider
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -18,8 +17,8 @@ func TestAccCiliumHelmValuesDataSource(t *testing.T) {
 			// Create and Read testing
 			{
 				Config: testAccCiliumHelmValuesDataSourceConfig(),
-				Check: resource.ComposeAggregateTestCheckFunc(
-					//resource.TestCheckResourceAttr("cilium.test", "version", "1.14.4"),
+				Check:  resource.ComposeAggregateTestCheckFunc(
+				//resource.TestCheckResourceAttr("cilium.test", "version", "1.14.4"),
 				),
 			},
 			// Delete testing automatically occurs in TestCase
@@ -28,7 +27,7 @@ func TestAccCiliumHelmValuesDataSource(t *testing.T) {
 }
 
 func testAccCiliumHelmValuesDataSourceConfig(version string) string {
-	return fmt.Sprintf(`
+	return `
 resource "cilium" "test" {
   version = "1.15.2"
 }
