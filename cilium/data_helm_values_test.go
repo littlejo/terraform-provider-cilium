@@ -33,6 +33,10 @@ resource "cilium" "test" {
 }
 
 data "cilium_helm_values" "test" {
+
+  depends_on = [
+	  cilium.test
+  ]
 }
 `
 }
