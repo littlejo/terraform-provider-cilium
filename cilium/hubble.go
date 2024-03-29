@@ -9,14 +9,12 @@ import (
 	"os"
 
 	"github.com/cilium/cilium-cli/hubble"
-	"github.com/cilium/cilium-cli/k8s"
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
@@ -32,15 +30,14 @@ func NewCiliumHubbleResource() resource.Resource {
 
 // CiliumHubbleResource defines the resource implementation.
 type CiliumHubbleResource struct {
-	client *k8s.Client
+	client *CiliumClient
 }
 
 // CiliumHubbleResourceModel describes the resource data model.
 type CiliumHubbleResourceModel struct {
-	Relay     types.Bool   `tfsdk:"relay"`
-	UI        types.Bool   `tfsdk:"ui"`
-	Namespace types.String `tfsdk:"namespace"`
-	Id        types.String `tfsdk:"id"`
+	Relay types.Bool   `tfsdk:"relay"`
+	UI    types.Bool   `tfsdk:"ui"`
+	Id    types.String `tfsdk:"id"`
 }
 
 func (r *CiliumHubbleResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -65,12 +62,6 @@ func (r *CiliumHubbleResource) Schema(ctx context.Context, req resource.SchemaRe
 				Computed:            true,
 				Default:             booldefault.StaticBool(true),
 			},
-			"namespace": schema.StringAttribute{
-				MarkdownDescription: ConcatDefault("Namespace in which to install", "kube-system"),
-				Optional:            true,
-				Computed:            true,
-				Default:             stringdefault.StaticString("kube-system"),
-			},
 			"id": schema.StringAttribute{
 				Computed:            true,
 				MarkdownDescription: "Cilium hubble identifier",
@@ -88,12 +79,12 @@ func (r *CiliumHubbleResource) Configure(ctx context.Context, req resource.Confi
 		return
 	}
 
-	client, ok := req.ProviderData.(*k8s.Client)
+	client, ok := req.ProviderData.(*CiliumClient)
 
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
-			fmt.Sprintf("Expected *k8s.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+			fmt.Sprintf("Expected *CiliumClient, got: %T. Please report this issue to the provider developers.", req.ProviderData),
 		)
 
 		return
@@ -104,7 +95,8 @@ func (r *CiliumHubbleResource) Configure(ctx context.Context, req resource.Confi
 
 func (r *CiliumHubbleResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var data CiliumHubbleResourceModel
-	k8sClient := r.client
+	c := r.client
+	k8sClient, namespace := c.client, c.namespace
 	if k8sClient == nil {
 		resp.Diagnostics.AddError("Client Error", "Unable to connect to kubernetes")
 		return
@@ -117,7 +109,6 @@ func (r *CiliumHubbleResource) Create(ctx context.Context, req resource.CreateRe
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	namespace := data.Namespace.ValueString()
 	params.Namespace = namespace
 	params.UI = data.UI.ValueBool()
 	params.Relay = data.Relay.ValueBool()
@@ -154,7 +145,8 @@ func (r *CiliumHubbleResource) Read(ctx context.Context, req resource.ReadReques
 
 func (r *CiliumHubbleResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var data CiliumHubbleResourceModel
-	k8sClient := r.client
+	c := r.client
+	k8sClient, namespace := c.client, c.namespace
 	if k8sClient == nil {
 		resp.Diagnostics.AddError("Client Error", "Unable to connect to kubernetes")
 		return
@@ -168,7 +160,6 @@ func (r *CiliumHubbleResource) Update(ctx context.Context, req resource.UpdateRe
 		return
 	}
 
-	namespace := data.Namespace.ValueString()
 	params.Namespace = namespace
 	params.UI = data.UI.ValueBool()
 	params.Relay = data.Relay.ValueBool()
@@ -184,7 +175,8 @@ func (r *CiliumHubbleResource) Update(ctx context.Context, req resource.UpdateRe
 
 func (r *CiliumHubbleResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data CiliumHubbleResourceModel
-	k8sClient := r.client
+	c := r.client
+	k8sClient, namespace := c.client, c.namespace
 	if k8sClient == nil {
 		resp.Diagnostics.AddError("Client Error", "Unable to connect to kubernetes")
 		return
@@ -198,7 +190,6 @@ func (r *CiliumHubbleResource) Delete(ctx context.Context, req resource.DeleteRe
 		return
 	}
 
-	namespace := data.Namespace.ValueString()
 	params.Namespace = namespace
 
 	if err := hubble.DisableWithHelm(context.Background(), k8sClient, params); err != nil {
