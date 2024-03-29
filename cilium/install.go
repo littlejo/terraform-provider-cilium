@@ -216,7 +216,7 @@ func (r *CiliumInstallResource) Create(ctx context.Context, req resource.CreateR
 	}
 
 	if wait {
-		if err := r.Wait(namespace); err != nil {
+		if err := r.Wait(); err != nil {
 			return
 		}
 	}
@@ -238,9 +238,9 @@ func (r *CiliumInstallResource) Create(ctx context.Context, req resource.CreateR
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (r *CiliumInstallResource) Wait(namespace string) (err error) {
+func (r *CiliumInstallResource) Wait() (err error) {
 	var status_params = status.K8sStatusParameters{}
-	status_params.Namespace = namespace
+	status_params.Namespace = r.client.namespace
 	status_params.Wait = true
 	status_params.WaitDuration = defaults.StatusWaitDuration
 	collector, err := status.NewK8sStatusCollector(r.client.client, status_params)
@@ -417,7 +417,7 @@ func (r *CiliumInstallResource) Update(ctx context.Context, req resource.UpdateR
 		return
 	}
 	if wait {
-		if err := r.Wait(namespace); err != nil {
+		if err := r.Wait(); err != nil {
 			return
 		}
 	}
