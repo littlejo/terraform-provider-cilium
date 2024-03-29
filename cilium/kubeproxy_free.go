@@ -7,7 +7,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/cilium/cilium-cli/k8s"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ktypes "k8s.io/apimachinery/pkg/types"
 
@@ -31,7 +30,7 @@ func NewCiliumKubeProxyDisabledResource() resource.Resource {
 
 // CiliumKubeProxyDisabledResource defines the resource implementation.
 type CiliumKubeProxyDisabledResource struct {
-	client *k8s.Client
+	client *CiliumClient
 }
 
 // CiliumInstallResourceModel describes the resource data model.
@@ -58,7 +57,7 @@ func (r *CiliumKubeProxyDisabledResource) Schema(ctx context.Context, req resour
 				Default:             stringdefault.StaticString("kube-proxy"),
 			},
 			"namespace": schema.StringAttribute{
-				MarkdownDescription: ConcatDefault("Namespace in which to install", "kube-system"),
+				MarkdownDescription: ConcatDefault("Namespace of DaemonSet", "kube-system"),
 				Optional:            true,
 				Computed:            true,
 				Default:             stringdefault.StaticString("kube-system"),
@@ -75,7 +74,8 @@ func (r *CiliumKubeProxyDisabledResource) Schema(ctx context.Context, req resour
 }
 
 func (r *CiliumKubeProxyDisabledResource) CheckDaemonsetStatus(ctx context.Context, namespace, daemonset string) error {
-	k8sClient := r.client
+	c := r.client
+	k8sClient := c.client
 	d, _ := k8sClient.GetDaemonSet(ctx, namespace, daemonset, metav1.GetOptions{})
 	if d == nil {
 		return nil
@@ -89,7 +89,8 @@ func (r *CiliumKubeProxyDisabledResource) CheckDaemonsetStatus(ctx context.Conte
 }
 
 func (r *CiliumKubeProxyDisabledResource) CheckDaemonsetAvailability(ctx context.Context, namespace, daemonset string) error {
-	k8sClient := r.client
+	c := r.client
+	k8sClient := c.client
 	d, err := k8sClient.GetDaemonSet(ctx, namespace, daemonset, metav1.GetOptions{})
 	if err != nil {
 		return err
@@ -108,12 +109,12 @@ func (r *CiliumKubeProxyDisabledResource) Configure(ctx context.Context, req res
 		return
 	}
 
-	client, ok := req.ProviderData.(*k8s.Client)
+	client, ok := req.ProviderData.(*CiliumClient)
 
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
-			fmt.Sprintf("Expected *k8s.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+			fmt.Sprintf("Expected *CiliumClient, got: %T. Please report this issue to the provider developers.", req.ProviderData),
 		)
 
 		return
@@ -124,7 +125,8 @@ func (r *CiliumKubeProxyDisabledResource) Configure(ctx context.Context, req res
 
 func (r *CiliumKubeProxyDisabledResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var data CiliumKubeProxyDisabledResourceModel
-	k8sClient := r.client
+	c := r.client
+	k8sClient := c.client
 	if k8sClient == nil {
 		resp.Diagnostics.AddError("Client Error", "Unable to connect to kubernetes")
 		return
@@ -136,8 +138,8 @@ func (r *CiliumKubeProxyDisabledResource) Create(ctx context.Context, req resour
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	namespace := data.Namespace.ValueString()
 	name := data.Name.ValueString()
+	namespace := data.Namespace.ValueString()
 	nodeSelectorKey := "non-existing"
 	nodeSelectorValue := "true"
 	patch := []byte(fmt.Sprintf(`{"spec":{"template":{"spec":{"nodeSelector":{"%s":"%s"}}}}}`, nodeSelectorKey, nodeSelectorValue))
@@ -165,7 +167,8 @@ func (r *CiliumKubeProxyDisabledResource) Create(ctx context.Context, req resour
 
 func (r *CiliumKubeProxyDisabledResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data CiliumKubeProxyDisabledResourceModel
-	k8sClient := r.client
+	c := r.client
+	k8sClient := c.client
 	if k8sClient == nil {
 		resp.Diagnostics.AddError("Client Error", "Unable to connect to kubernetes")
 		return
@@ -177,8 +180,8 @@ func (r *CiliumKubeProxyDisabledResource) Read(ctx context.Context, req resource
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	namespace := data.Namespace.ValueString()
 	name := data.Name.ValueString()
+	namespace := data.Namespace.ValueString()
 	if err := r.CheckDaemonsetStatus(ctx, namespace, name); err != nil {
 		resp.State.RemoveResource(ctx)
 		return
@@ -190,7 +193,8 @@ func (r *CiliumKubeProxyDisabledResource) Read(ctx context.Context, req resource
 
 func (r *CiliumKubeProxyDisabledResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var data CiliumKubeProxyDisabledResourceModel
-	k8sClient := r.client
+	c := r.client
+	k8sClient := c.client
 	if k8sClient == nil {
 		resp.Diagnostics.AddError("Client Error", "Unable to connect to kubernetes")
 		return
@@ -202,8 +206,8 @@ func (r *CiliumKubeProxyDisabledResource) Update(ctx context.Context, req resour
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	namespace := data.Namespace.ValueString()
 	name := data.Name.ValueString()
+	namespace := data.Namespace.ValueString()
 	nodeSelectorKey := "non-existing"
 	nodeSelectorValue := "true"
 	patch := []byte(fmt.Sprintf(`{"spec":{"template":{"spec":{"nodeSelector":{"%s":"%s"}}}}}`, nodeSelectorKey, nodeSelectorValue))
@@ -223,7 +227,8 @@ func (r *CiliumKubeProxyDisabledResource) Update(ctx context.Context, req resour
 
 func (r *CiliumKubeProxyDisabledResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data CiliumKubeProxyDisabledResourceModel
-	k8sClient := r.client
+	c := r.client
+	k8sClient := c.client
 	if k8sClient == nil {
 		resp.Diagnostics.AddError("Client Error", "Unable to connect to kubernetes")
 		return
@@ -236,8 +241,8 @@ func (r *CiliumKubeProxyDisabledResource) Delete(ctx context.Context, req resour
 		return
 	}
 
-	namespace := data.Namespace.ValueString()
 	name := data.Name.ValueString()
+	namespace := data.Namespace.ValueString()
 	nodeSelectorKey := "non-existing"
 	patch := []byte(fmt.Sprintf(`[{"op":"remove","path":"/spec/template/spec/nodeSelector/%s"}]`, nodeSelectorKey))
 

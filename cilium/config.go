@@ -11,14 +11,12 @@ import (
 	"regexp"
 
 	"github.com/cilium/cilium-cli/config"
-	"github.com/cilium/cilium-cli/k8s"
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
@@ -34,16 +32,15 @@ func NewCiliumConfigResource() resource.Resource {
 
 // CiliumConfigResource defines the resource implementation.
 type CiliumConfigResource struct {
-	client *k8s.Client
+	client *CiliumClient
 }
 
 // CiliumConfigResourceModel describes the resource data model.
 type CiliumConfigResourceModel struct {
-	Namespace types.String `tfsdk:"namespace"`
-	Restart   types.Bool   `tfsdk:"restart"`
-	Key       types.String `tfsdk:"key"`
-	Value     types.String `tfsdk:"value"`
-	Id        types.String `tfsdk:"id"`
+	Restart types.Bool   `tfsdk:"restart"`
+	Key     types.String `tfsdk:"key"`
+	Value   types.String `tfsdk:"value"`
+	Id      types.String `tfsdk:"id"`
 }
 
 func (r *CiliumConfigResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -56,12 +53,6 @@ func (r *CiliumConfigResource) Schema(ctx context.Context, req resource.SchemaRe
 		MarkdownDescription: "Config resource for Cilium. This is equivalent to cilium cli: `cilium config`: It manages the cilium Kubernetes ConfigMap resource",
 
 		Attributes: map[string]schema.Attribute{
-			"namespace": schema.StringAttribute{
-				MarkdownDescription: ConcatDefault("Namespace in which to install", "kube-system"),
-				Optional:            true,
-				Computed:            true,
-				Default:             stringdefault.StaticString("kube-system"),
-			},
 			"restart": schema.BoolAttribute{
 				MarkdownDescription: ConcatDefault("Restart Cilium pods", "true"),
 				Optional:            true,
@@ -93,12 +84,12 @@ func (r *CiliumConfigResource) Configure(ctx context.Context, req resource.Confi
 		return
 	}
 
-	client, ok := req.ProviderData.(*k8s.Client)
+	client, ok := req.ProviderData.(*CiliumClient)
 
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
-			fmt.Sprintf("Expected *k8s.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+			fmt.Sprintf("Expected *CiliumClient, got: %T. Please report this issue to the provider developers.", req.ProviderData),
 		)
 
 		return
@@ -109,7 +100,8 @@ func (r *CiliumConfigResource) Configure(ctx context.Context, req resource.Confi
 
 func (r *CiliumConfigResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var data CiliumConfigResourceModel
-	k8sClient := r.client
+	c := r.client
+	k8sClient, namespace := c.client, c.namespace
 	if k8sClient == nil {
 		resp.Diagnostics.AddError("Client Error", "Unable to connect to kubernetes")
 		return
@@ -124,7 +116,6 @@ func (r *CiliumConfigResource) Create(ctx context.Context, req resource.CreateRe
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	namespace := data.Namespace.ValueString()
 	key := data.Key.ValueString()
 	value := data.Value.ValueString()
 	params.Namespace = namespace
@@ -150,7 +141,9 @@ func (r *CiliumConfigResource) Create(ctx context.Context, req resource.CreateRe
 
 func (r *CiliumConfigResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data CiliumConfigResourceModel
-	k8sClient := r.client
+	c := r.client
+
+	k8sClient, namespace := c.client, c.namespace
 	if k8sClient == nil {
 		resp.Diagnostics.AddError("Client Error", "Unable to connect to kubernetes")
 		return
@@ -165,17 +158,15 @@ func (r *CiliumConfigResource) Read(ctx context.Context, req resource.ReadReques
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	namespace := data.Namespace.ValueString()
 	params.Namespace = namespace
 	key := data.Key.ValueString()
 	value := data.Value.ValueString()
 
 	readReq := CiliumConfigResourceModel{
-		Id:        data.Id,
-		Value:     data.Value,
-		Key:       data.Key,
-		Restart:   data.Restart,
-		Namespace: data.Namespace,
+		Id:      data.Id,
+		Value:   data.Value,
+		Key:     data.Key,
+		Restart: data.Restart,
 	}
 
 	_, err := json.Marshal(readReq)
@@ -204,7 +195,7 @@ func (r *CiliumConfigResource) Read(ctx context.Context, req resource.ReadReques
 		return
 	}
 	if m {
-		fmt.Println("Ok ttttttttttttt")
+		fmt.Println("Ok")
 	} else {
 		resp.State.RemoveResource(ctx)
 		return
@@ -216,7 +207,8 @@ func (r *CiliumConfigResource) Read(ctx context.Context, req resource.ReadReques
 
 func (r *CiliumConfigResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var data CiliumConfigResourceModel
-	k8sClient := r.client
+	c := r.client
+	k8sClient, namespace := c.client, c.namespace
 	if k8sClient == nil {
 		resp.Diagnostics.AddError("Client Error", "Unable to connect to kubernetes")
 		return
@@ -232,7 +224,6 @@ func (r *CiliumConfigResource) Update(ctx context.Context, req resource.UpdateRe
 		return
 	}
 
-	namespace := data.Namespace.ValueString()
 	key := data.Key.ValueString()
 	value := data.Value.ValueString()
 	params.Namespace = namespace
@@ -250,7 +241,8 @@ func (r *CiliumConfigResource) Update(ctx context.Context, req resource.UpdateRe
 
 func (r *CiliumConfigResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data CiliumConfigResourceModel
-	k8sClient := r.client
+	c := r.client
+	k8sClient, namespace := c.client, c.namespace
 	if k8sClient == nil {
 		resp.Diagnostics.AddError("Client Error", "Unable to connect to kubernetes")
 		return
@@ -266,7 +258,6 @@ func (r *CiliumConfigResource) Delete(ctx context.Context, req resource.DeleteRe
 		return
 	}
 
-	namespace := data.Namespace.ValueString()
 	params.Namespace = namespace
 	key := data.Key.ValueString()
 	params.Restart = data.Restart.ValueBool()

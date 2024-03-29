@@ -4,7 +4,6 @@
 package provider
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -17,7 +16,7 @@ func TestAccCiliumKubeProxyDisabledResource(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Create and Read testing
 			{
-				Config: testAccCiliumKubeProxyDisabledResourceConfig("kube-system"),
+				Config: testAccCiliumKubeProxyDisabledResourceConfig(),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("cilium_kubeproxy_free.test", "name", "kube-proxy"),
 					resource.TestCheckResourceAttr("cilium_kubeproxy_free.test", "namespace", "kube-system"),
@@ -47,10 +46,9 @@ func TestAccCiliumKubeProxyDisabledResource(t *testing.T) {
 	})
 }
 
-func testAccCiliumKubeProxyDisabledResourceConfig(namespace string) string {
-	return fmt.Sprintf(`
+func testAccCiliumKubeProxyDisabledResourceConfig() string {
+	return `
 resource "cilium_kubeproxy_free" "test" {
-  namespace = %[1]q
 }
-`, namespace)
+`
 }
