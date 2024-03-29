@@ -7,5 +7,5 @@ nodes:
     containerPath: "/var/lib/kubelet/seccomp/profiles"
 networking:
   disableDefaultCNI: true
-  podSubnet: "10.1.0.0/16"
-  serviceSubnet: "172.20.1.0/24"
+  podSubnet: "10.2.0.0/16"
+  serviceSubnet: "172.20.2.0/24"

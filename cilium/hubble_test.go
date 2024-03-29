@@ -20,7 +20,6 @@ func TestAccCiliumHubbleResource(t *testing.T) {
 				Config: testAccCiliumHubbleResourceConfig("true"),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("cilium_hubble.test", "ui", "true"),
-					resource.TestCheckResourceAttr("cilium_hubble.test", "namespace", "kube-system"),
 					resource.TestCheckResourceAttr("cilium_hubble.test", "relay", "true"),
 					resource.TestCheckResourceAttr("cilium_hubble.test", "id", "cilium-hubble"),
 				),

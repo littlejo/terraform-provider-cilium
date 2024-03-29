@@ -27,7 +27,6 @@ resource "local_file" "example" {
 
 ### Optional
 
-- `namespace` (String) Namespace of cilium (Default: `kube-system`).
 - `release` (String) Helm release (Default: `cilium`).
 
 ### Read-Only

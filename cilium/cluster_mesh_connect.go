@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/cilium/cilium-cli/clustermesh"
-	"github.com/cilium/cilium-cli/k8s"
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -32,7 +31,7 @@ func NewCiliumClusterMeshConnectResource() resource.Resource {
 
 // CiliumClusterMeshConnectResource defines the resource implementation.
 type CiliumClusterMeshConnectResource struct {
-	client *k8s.Client
+	client *CiliumClient
 }
 
 // CiliumClusterMeshConnectResourceModel describes the resource data model.
@@ -40,7 +39,6 @@ type CiliumClusterMeshConnectResourceModel struct {
 	//SourceEndpoints      types.List `tfsdk:"source_endpoint"`
 	//DestinationEndpoints types.List `tfsdk:"destination_endpoint"`
 	DestinationContext types.String `tfsdk:"destination_context"`
-	Namespace          types.String `tfsdk:"namespace"`
 	Id                 types.String `tfsdk:"id"`
 }
 
@@ -73,12 +71,6 @@ func (r *CiliumClusterMeshConnectResource) Schema(ctx context.Context, req resou
 			//	Computed:            true,
 			//	Default:             listdefault.StaticValue([]),
 			//},
-			"namespace": schema.StringAttribute{
-				MarkdownDescription: ConcatDefault("Namespace in which to install", "kube-system"),
-				Optional:            true,
-				Computed:            true,
-				Default:             stringdefault.StaticString("kube-system"),
-			},
 			"id": schema.StringAttribute{
 				Computed:            true,
 				MarkdownDescription: "Cilium ClusterMesh Connection identifier",
@@ -96,12 +88,12 @@ func (r *CiliumClusterMeshConnectResource) Configure(ctx context.Context, req re
 		return
 	}
 
-	client, ok := req.ProviderData.(*k8s.Client)
+	client, ok := req.ProviderData.(*CiliumClient)
 
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
-			fmt.Sprintf("Expected *k8s.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+			fmt.Sprintf("Expected *CiliumClient, got: %T. Please report this issue to the provider developers.", req.ProviderData),
 		)
 
 		return
@@ -112,7 +104,8 @@ func (r *CiliumClusterMeshConnectResource) Configure(ctx context.Context, req re
 
 func (r *CiliumClusterMeshConnectResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var data CiliumClusterMeshConnectResourceModel
-	k8sClient := r.client
+	c := r.client
+	k8sClient, namespace, helm_release := c.client, c.namespace, c.helm_release
 	if k8sClient == nil {
 		resp.Diagnostics.AddError("Client Error", "Unable to connect to kubernetes")
 		return
@@ -127,9 +120,9 @@ func (r *CiliumClusterMeshConnectResource) Create(ctx context.Context, req resou
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	namespace := data.Namespace.ValueString()
 	params.Namespace = namespace
 	params.DestinationContext = data.DestinationContext.ValueString()
+	params.HelmReleaseName = helm_release
 
 	cm := clustermesh.NewK8sClusterMesh(k8sClient, params)
 	if err := cm.ConnectWithHelm(context.Background()); err != nil {
@@ -154,7 +147,8 @@ func (r *CiliumClusterMeshConnectResource) Read(ctx context.Context, req resourc
 	var params = clustermesh.Parameters{
 		Writer: os.Stdout,
 	}
-	k8sClient := r.client
+	c := r.client
+	k8sClient, namespace, helm_release := c.client, c.namespace, c.helm_release
 	if k8sClient == nil {
 		resp.Diagnostics.AddError("Client Error", "Unable to connect to kubernetes")
 		return
@@ -167,8 +161,8 @@ func (r *CiliumClusterMeshConnectResource) Read(ctx context.Context, req resourc
 		return
 	}
 
-	namespace := data.Namespace.ValueString()
 	params.Namespace = namespace
+	params.HelmReleaseName = helm_release
 	params.Wait = true
 	params.WaitDuration = 20 * time.Second
 
@@ -184,7 +178,8 @@ func (r *CiliumClusterMeshConnectResource) Read(ctx context.Context, req resourc
 
 func (r *CiliumClusterMeshConnectResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var data CiliumClusterMeshConnectResourceModel
-	k8sClient := r.client
+	c := r.client
+	k8sClient, namespace, helm_release := c.client, c.namespace, c.helm_release
 	if k8sClient == nil {
 		resp.Diagnostics.AddError("Client Error", "Unable to connect to kubernetes")
 		return
@@ -199,9 +194,9 @@ func (r *CiliumClusterMeshConnectResource) Update(ctx context.Context, req resou
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	namespace := data.Namespace.ValueString()
 	params.Namespace = namespace
 	params.DestinationContext = data.DestinationContext.ValueString()
+	params.HelmReleaseName = helm_release
 
 	cm := clustermesh.NewK8sClusterMesh(k8sClient, params)
 	if err := cm.ConnectWithHelm(context.Background()); err != nil {
@@ -215,7 +210,8 @@ func (r *CiliumClusterMeshConnectResource) Update(ctx context.Context, req resou
 
 func (r *CiliumClusterMeshConnectResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data CiliumClusterMeshConnectResourceModel
-	k8sClient := r.client
+	c := r.client
+	k8sClient, namespace, helm_release := c.client, c.namespace, c.helm_release
 	if k8sClient == nil {
 		resp.Diagnostics.AddError("Client Error", "Unable to connect to kubernetes")
 		return
@@ -231,8 +227,8 @@ func (r *CiliumClusterMeshConnectResource) Delete(ctx context.Context, req resou
 		return
 	}
 
-	namespace := data.Namespace.ValueString()
 	params.Namespace = namespace
+	params.HelmReleaseName = helm_release
 
 	cm := clustermesh.NewK8sClusterMesh(k8sClient, params)
 	if err := cm.DisconnectWithHelm(context.Background()); err != nil {

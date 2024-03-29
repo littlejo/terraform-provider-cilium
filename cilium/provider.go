@@ -28,11 +28,18 @@ type CiliumProvider struct {
 	version string
 }
 
+type CiliumClient struct {
+	client       *k8s.Client
+	namespace    string
+	helm_release string
+}
+
 // CiliumProviderModel describes the provider data model.
 type CiliumProviderModel struct {
-	Context    types.String `tfsdk:"context"`
-	ConfigPath types.String `tfsdk:"config_path"`
-	Namespace  types.String `tfsdk:"namespace"`
+	Context     types.String `tfsdk:"context"`
+	ConfigPath  types.String `tfsdk:"config_path"`
+	Namespace   types.String `tfsdk:"namespace"`
+	HelmRelease types.String `tfsdk:"helm_release"`
 }
 
 func ConcatDefault(text string, d string) string {
@@ -59,6 +66,10 @@ func (p *CiliumProvider) Schema(ctx context.Context, req provider.SchemaRequest,
 				MarkdownDescription: ConcatDefault("Namespace to install cilium", "kube-system"),
 				Optional:            true,
 			},
+			"helm_release": schema.StringAttribute{
+				MarkdownDescription: ConcatDefault("Helm Release to install cilium", "cilium"),
+				Optional:            true,
+			},
 		},
 	}
 }
@@ -73,14 +84,18 @@ func (p *CiliumProvider) Configure(ctx context.Context, req provider.ConfigureRe
 	}
 
 	namespace := data.Namespace.ValueString()
-	if namespace == "" {
-		namespace = "kube-system"
-	}
 	config_path := data.ConfigPath.ValueString()
 	context := data.Context.ValueString()
+	helm_release := data.HelmRelease.ValueString()
 
 	if config_path != "" {
 		os.Setenv("KUBECONFIG", config_path)
+	}
+	if helm_release == "" {
+		helm_release = "cilium"
+	}
+	if namespace == "" {
+		namespace = "kube-system"
 	}
 
 	client, err := k8s.NewClient(context, config_path, namespace)
@@ -93,8 +108,8 @@ func (p *CiliumProvider) Configure(ctx context.Context, req provider.ConfigureRe
 	// if data.Endpoint.IsNull() { /* ... */ }
 
 	// Example client configuration for data sources and resources
-	resp.DataSourceData = client
-	resp.ResourceData = client
+	resp.DataSourceData = &CiliumClient{client: client, namespace: namespace, helm_release: helm_release}
+	resp.ResourceData = &CiliumClient{client: client, namespace: namespace, helm_release: helm_release}
 }
 
 func (p *CiliumProvider) Resources(ctx context.Context) []func() resource.Resource {

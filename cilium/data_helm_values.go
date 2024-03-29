@@ -7,7 +7,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/cilium/cilium-cli/k8s"
 	"gopkg.in/yaml.v3"
 	"helm.sh/helm/v3/pkg/action"
 
@@ -26,14 +25,12 @@ func NewCiliumHelmValuesDataSource() datasource.DataSource {
 
 // ExampleDataSource defines the data source implementation.
 type CiliumHelmValuesDataSource struct {
-	client *k8s.Client
+	client *CiliumClient
 }
 
 // ExampleDataSourceModel describes the data source data model.
 type CiliumHelmValuesDataSourceModel struct {
-	Release   types.String `tfsdk:"release"`
-	Namespace types.String `tfsdk:"namespace"`
-	Yaml      types.String `tfsdk:"yaml"`
+	Yaml types.String `tfsdk:"yaml"`
 }
 
 func (d *CiliumHelmValuesDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -46,14 +43,6 @@ func (d *CiliumHelmValuesDataSource) Schema(ctx context.Context, req datasource.
 		MarkdownDescription: "Helm values of cilium",
 
 		Attributes: map[string]schema.Attribute{
-			"release": schema.StringAttribute{
-				MarkdownDescription: ConcatDefault("Helm release", "cilium"),
-				Optional:            true,
-			},
-			"namespace": schema.StringAttribute{
-				MarkdownDescription: ConcatDefault("Namespace of cilium", "kube-system"),
-				Optional:            true,
-			},
 			"yaml": schema.StringAttribute{
 				MarkdownDescription: "Yaml output",
 				Computed:            true,
@@ -68,12 +57,12 @@ func (d *CiliumHelmValuesDataSource) Configure(ctx context.Context, req datasour
 		return
 	}
 
-	client, ok := req.ProviderData.(*k8s.Client)
+	client, ok := req.ProviderData.(*CiliumClient)
 
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Data Source Configure Type",
-			fmt.Sprintf("Expected *http.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+			fmt.Sprintf("Expected *CiliumClient, got: %T. Please report this issue to the provider developers.", req.ProviderData),
 		)
 
 		return
@@ -84,7 +73,8 @@ func (d *CiliumHelmValuesDataSource) Configure(ctx context.Context, req datasour
 
 func (d *CiliumHelmValuesDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data CiliumHelmValuesDataSourceModel
-	k8sClient := d.client
+	c := d.client
+	k8sClient, namespace, helm_release := c.client, c.namespace, c.helm_release
 	if k8sClient == nil {
 		resp.Diagnostics.AddError("Client Error", "Unable to connect to kubernetes")
 		return
@@ -98,14 +88,6 @@ func (d *CiliumHelmValuesDataSource) Read(ctx context.Context, req datasource.Re
 	}
 	actionConfig := action.Configuration{}
 	logger := func(format string, v ...interface{}) {}
-	namespace := data.Namespace.ValueString()
-	if namespace == "" {
-		namespace = "kube-system"
-	}
-	release := data.Release.ValueString()
-	if release == "" {
-		release = "cilium"
-	}
 	helmDriver := ""
 	if err := actionConfig.Init(k8sClient.RESTClientGetter, namespace, helmDriver, logger); err != nil {
 		return
@@ -113,7 +95,7 @@ func (d *CiliumHelmValuesDataSource) Read(ctx context.Context, req datasource.Re
 
 	client := action.NewGetValues(&actionConfig)
 
-	vals, err := client.Run(release)
+	vals, err := client.Run(helm_release)
 
 	if err != nil {
 		return
@@ -128,8 +110,6 @@ func (d *CiliumHelmValuesDataSource) Read(ctx context.Context, req datasource.Re
 	}
 
 	data.Yaml = types.StringValue(string(yaml))
-	data.Namespace = types.StringValue(namespace)
-	data.Release = types.StringValue(release)
 
 	// Write logs using the tflog package
 	// Documentation: https://terraform.io/plugin/log

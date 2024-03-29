@@ -40,7 +40,7 @@ func NewCiliumInstallResource() resource.Resource {
 
 // CiliumInstallResource defines the resource implementation.
 type CiliumInstallResource struct {
-	client *k8s.Client
+	client *CiliumClient
 }
 
 // CiliumInstallResourceModel describes the resource data model.
@@ -48,7 +48,6 @@ type CiliumInstallResourceModel struct {
 	HelmSet    types.List   `tfsdk:"set"`
 	Values     types.String `tfsdk:"values"`
 	Version    types.String `tfsdk:"version"`
-	Namespace  types.String `tfsdk:"namespace"`
 	Repository types.String `tfsdk:"repository"`
 	DataPath   types.String `tfsdk:"data_path"`
 	Wait       types.Bool   `tfsdk:"wait"`
@@ -86,12 +85,6 @@ func (r *CiliumInstallResource) Schema(ctx context.Context, req resource.SchemaR
 				Optional:            true,
 				Computed:            true,
 				Default:             stringdefault.StaticString(defaults.Version),
-			},
-			"namespace": schema.StringAttribute{
-				MarkdownDescription: ConcatDefault("Namespace in which to install", "kube-system"),
-				Optional:            true,
-				Computed:            true,
-				Default:             stringdefault.StaticString("kube-system"),
 			},
 			"repository": schema.StringAttribute{
 				MarkdownDescription: ConcatDefault("Helm chart repository to download Cilium charts from", defaults.HelmRepository),
@@ -144,12 +137,12 @@ func (r *CiliumInstallResource) Configure(ctx context.Context, req resource.Conf
 		return
 	}
 
-	client, ok := req.ProviderData.(*k8s.Client)
+	client, ok := req.ProviderData.(*CiliumClient)
 
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
-			fmt.Sprintf("Expected *k8s.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+			fmt.Sprintf("Expected *CiliumClient, got: %T. Please report this issue to the provider developers.", req.ProviderData),
 		)
 
 		return
@@ -160,7 +153,8 @@ func (r *CiliumInstallResource) Configure(ctx context.Context, req resource.Conf
 
 func (r *CiliumInstallResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var data CiliumInstallResourceModel
-	k8sClient := r.client
+	c := r.client
+	k8sClient, namespace, helm_release := c.client, c.namespace, c.helm_release
 	var params = install.Parameters{Writer: os.Stdout}
 	var options values.Options
 
@@ -174,9 +168,9 @@ func (r *CiliumInstallResource) Create(ctx context.Context, req resource.CreateR
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	namespace := data.Namespace.ValueString()
 	params.Namespace = namespace
 	params.Version = data.Version.ValueString()
+	params.HelmReleaseName = helm_release
 	wait := data.Wait.ValueBool()
 
 	helmSet := make([]types.String, 0, len(data.HelmSet.Elements()))
@@ -222,7 +216,7 @@ func (r *CiliumInstallResource) Create(ctx context.Context, req resource.CreateR
 	}
 
 	if wait {
-		if err := r.Wait(namespace); err != nil {
+		if err := r.Wait(); err != nil {
 			return
 		}
 	}
@@ -244,12 +238,12 @@ func (r *CiliumInstallResource) Create(ctx context.Context, req resource.CreateR
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (r *CiliumInstallResource) Wait(namespace string) (err error) {
+func (r *CiliumInstallResource) Wait() (err error) {
 	var status_params = status.K8sStatusParameters{}
-	status_params.Namespace = namespace
+	status_params.Namespace = r.client.namespace
 	status_params.Wait = true
 	status_params.WaitDuration = defaults.StatusWaitDuration
-	collector, err := status.NewK8sStatusCollector(r.client, status_params)
+	collector, err := status.NewK8sStatusCollector(r.client.client, status_params)
 	if err != nil {
 		return err
 	}
@@ -302,26 +296,27 @@ func GetHelmValues(
 func GetMetadata(
 	k8sClient *k8s.Client,
 	namespace, name string,
-) (string, string, error) {
+) (string, error) {
 	helmDriver := ""
 	actionConfig := action.Configuration{}
 	logger := func(format string, v ...interface{}) {}
 	if err := actionConfig.Init(k8sClient.RESTClientGetter, namespace, helmDriver, logger); err != nil {
-		return "", "", err
+		return "", err
 	}
 	client := action.NewGetMetadata(&actionConfig)
 
 	vals, err := client.Run(name)
 	if err != nil {
-		return "", "", err
+		return "", err
 	}
 
-	return vals.AppVersion, vals.Namespace, nil
+	return vals.AppVersion, nil
 }
 
 func (r *CiliumInstallResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data CiliumInstallResourceModel
-	k8sClient := r.client
+	c := r.client
+	k8sClient, namespace, helm_release := c.client, c.namespace, c.helm_release
 
 	// Read Terraform prior state data into the model
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
@@ -335,25 +330,22 @@ func (r *CiliumInstallResource) Read(ctx context.Context, req resource.ReadReque
 		return
 	}
 
-	namespace := data.Namespace.ValueString()
-
-	_, err := GetCurrentRelease(k8sClient, namespace, "cilium")
+	_, err := GetCurrentRelease(k8sClient, namespace, helm_release)
 	if err != nil {
 		resp.State.RemoveResource(ctx)
 		return
 	}
-	helm_values, err := GetHelmValues(k8sClient, namespace, "cilium")
+	helm_values, err := GetHelmValues(k8sClient, namespace, helm_release)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read tfstate: %s", err))
 		return
 	}
-	version, ns, err := GetMetadata(k8sClient, namespace, "cilium")
+	version, err := GetMetadata(k8sClient, namespace, "cilium")
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read tfstate: %s", err))
 		return
 	}
 	data.HelmValues = types.StringValue(helm_values)
-	data.Namespace = types.StringValue(ns)
 	data.Version = types.StringValue(version)
 
 	// Save updated data into Terraform state
@@ -362,9 +354,15 @@ func (r *CiliumInstallResource) Read(ctx context.Context, req resource.ReadReque
 
 func (r *CiliumInstallResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var data CiliumInstallResourceModel
-	k8sClient := r.client
+	c := r.client
+	k8sClient, namespace, helm_release := c.client, c.namespace, c.helm_release
 	var params = install.Parameters{Writer: os.Stdout}
 	var options values.Options
+
+	if k8sClient == nil {
+		resp.Diagnostics.AddError("Client Error", "Unable to connect to kubernetes")
+		return
+	}
 
 	// Read Terraform plan data into the model
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
@@ -373,9 +371,9 @@ func (r *CiliumInstallResource) Update(ctx context.Context, req resource.UpdateR
 		return
 	}
 
-	namespace := data.Namespace.ValueString()
 	params.Namespace = namespace
 	params.Version = data.Version.ValueString()
+	params.HelmReleaseName = helm_release
 	params.HelmResetValues = data.Reset.ValueBool()
 	params.HelmReuseValues = data.Reuse.ValueBool()
 	wait := data.Wait.ValueBool()
@@ -419,12 +417,12 @@ func (r *CiliumInstallResource) Update(ctx context.Context, req resource.UpdateR
 		return
 	}
 	if wait {
-		if err := r.Wait(namespace); err != nil {
+		if err := r.Wait(); err != nil {
 			return
 		}
 	}
 
-	helm_values, err := GetHelmValues(k8sClient, namespace, "cilium")
+	helm_values, err := GetHelmValues(k8sClient, namespace, helm_release)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to upgrade Cilium: %s", err))
 		return
@@ -436,7 +434,8 @@ func (r *CiliumInstallResource) Update(ctx context.Context, req resource.UpdateR
 
 func (r *CiliumInstallResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data CiliumInstallResourceModel
-	k8sClient := r.client
+	c := r.client
+	k8sClient, namespace, helm_release := c.client, c.namespace, c.helm_release
 	if k8sClient == nil {
 		resp.Diagnostics.AddError("Client Error", "Unable to connect to kubernetes")
 		return
@@ -450,8 +449,8 @@ func (r *CiliumInstallResource) Delete(ctx context.Context, req resource.DeleteR
 		return
 	}
 
-	namespace := data.Namespace.ValueString()
 	params.Namespace = namespace
+	params.HelmReleaseName = helm_release
 	params.TestNamespace = defaults.ConnectivityCheckNamespace
 	params.Wait = true
 	params.Timeout = defaults.UninstallTimeout

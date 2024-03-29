@@ -21,7 +21,6 @@ func TestAccCiliumConfigResource(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("cilium_config.test", "key", "debug"),
 					resource.TestCheckResourceAttr("cilium_config.test", "value", "true"),
-					resource.TestCheckResourceAttr("cilium_config.test", "namespace", "kube-system"),
 					resource.TestCheckResourceAttr("cilium_config.test", "restart", "true"),
 					resource.TestCheckResourceAttr("cilium_config.test", "id", "cilium-config-debug"),
 				),
