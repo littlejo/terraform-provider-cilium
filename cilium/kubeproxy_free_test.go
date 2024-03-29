@@ -47,8 +47,8 @@ func TestAccCiliumKubeProxyDisabledResource(t *testing.T) {
 }
 
 func testAccCiliumKubeProxyDisabledResourceConfig() string {
-	return fmt.Sprintf(`
+	return `
 resource "cilium_kubeproxy_free" "test" {
 }
-`)
+`
 }
