@@ -17,8 +17,8 @@ func TestAccCiliumHelmValuesDataSource(t *testing.T) {
 			// Create and Read testing
 			{
 				Config: testAccCiliumHelmValuesDataSourceConfig(),
-				Check:  resource.ComposeAggregateTestCheckFunc(
-				//					resource.TestCheckResourceAttr("data.cilium_helm_values.test", "yaml", "1.14.4"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("data.cilium_helm_values.test", "yaml", "1.14.4"),
 				),
 			},
 			// Delete testing automatically occurs in TestCase
