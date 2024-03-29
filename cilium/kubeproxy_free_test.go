@@ -49,7 +49,6 @@ func TestAccCiliumKubeProxyDisabledResource(t *testing.T) {
 func testAccCiliumKubeProxyDisabledResourceConfig(namespace string) string {
 	return fmt.Sprintf(`
 resource "cilium_kubeproxy_free" "test" {
-  namespace = %[1]q
 }
-`, namespace)
+`)
 }
