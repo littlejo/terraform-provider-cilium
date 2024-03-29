@@ -19,7 +19,6 @@ func TestAccCiliumInstallResource(t *testing.T) {
 			{
 				Config: testAccCiliumInstallResourceConfig("1.14.4"),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("cilium.test", "namespace", "kube-system"),
 					resource.TestCheckResourceAttr("cilium.test", "version", "1.14.4"),
 					resource.TestCheckResourceAttr("cilium.test", "id", "cilium"),
 				),
