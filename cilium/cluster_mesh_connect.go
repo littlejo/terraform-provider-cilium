@@ -162,6 +162,7 @@ func (r *CiliumClusterMeshConnectResource) Read(ctx context.Context, req resourc
 	}
 
 	params.Namespace = namespace
+	params.HelmReleaseName = helm_release
 	params.Wait = true
 	params.WaitDuration = 20 * time.Second
 
@@ -193,7 +194,6 @@ func (r *CiliumClusterMeshConnectResource) Update(ctx context.Context, req resou
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	namespace := data.Namespace.ValueString()
 	params.Namespace = namespace
 	params.DestinationContext = data.DestinationContext.ValueString()
 	params.HelmReleaseName = helm_release
