@@ -177,7 +177,7 @@ func (r *CiliumInstallResource) Create(ctx context.Context, req resource.CreateR
 	namespace := data.Namespace.ValueString()
 	params.Namespace = namespace
 	params.Version = data.Version.ValueString()
-	params.ReleaseName = "cilium"
+	params.HelmReleaseName = "cilium"
 	wait := data.Wait.ValueBool()
 
 	helmSet := make([]types.String, 0, len(data.HelmSet.Elements()))
