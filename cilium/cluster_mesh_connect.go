@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/cilium/cilium-cli/clustermesh"
-	"github.com/cilium/cilium-cli/k8s"
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -148,7 +147,8 @@ func (r *CiliumClusterMeshConnectResource) Read(ctx context.Context, req resourc
 	var params = clustermesh.Parameters{
 		Writer: os.Stdout,
 	}
-	k8sClient := r.client
+	c := r.client
+	k8sClient, namespace, helm_release := c.client, c.namespace, c.helm_release
 	if k8sClient == nil {
 		resp.Diagnostics.AddError("Client Error", "Unable to connect to kubernetes")
 		return
@@ -161,7 +161,6 @@ func (r *CiliumClusterMeshConnectResource) Read(ctx context.Context, req resourc
 		return
 	}
 
-	namespace := data.Namespace.ValueString()
 	params.Namespace = namespace
 	params.Wait = true
 	params.WaitDuration = 20 * time.Second
