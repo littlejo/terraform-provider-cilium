@@ -17,8 +17,8 @@ func TestAccCiliumHelmValuesDataSource(t *testing.T) {
 			// Create and Read testing
 			{
 				Config: testAccCiliumHelmValuesDataSourceConfig(),
-				Check:  resource.ComposeAggregateTestCheckFunc(
-				//resource.TestCheckResourceAttr("cilium.test", "version", "1.14.4"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+//					resource.TestCheckResourceAttr("data.cilium_helm_values.test", "yaml", "1.14.4"),
 				),
 			},
 			// Delete testing automatically occurs in TestCase
@@ -26,7 +26,7 @@ func TestAccCiliumHelmValuesDataSource(t *testing.T) {
 	})
 }
 
-func testAccCiliumHelmValuesDataSourceConfig(version string) string {
+func testAccCiliumHelmValuesDataSourceConfig() string {
 	return `
 resource "cilium" "test" {
   version = "1.15.2"
