@@ -96,7 +96,7 @@ func (r *CiliumHubbleResource) Configure(ctx context.Context, req resource.Confi
 func (r *CiliumHubbleResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var data CiliumHubbleResourceModel
 	c := r.client
-	k8sClient, namespace := c.client, c.namespace
+	k8sClient, namespace, helm_release := c.client, c.namespace, c.helm_release
 	if k8sClient == nil {
 		resp.Diagnostics.AddError("Client Error", "Unable to connect to kubernetes")
 		return
@@ -112,6 +112,7 @@ func (r *CiliumHubbleResource) Create(ctx context.Context, req resource.CreateRe
 	params.Namespace = namespace
 	params.UI = data.UI.ValueBool()
 	params.Relay = data.Relay.ValueBool()
+	params.HelmReleaseName = helm_release
 
 	if err := hubble.EnableWithHelm(context.Background(), k8sClient, params); err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to enable Hubble: %s", err))
@@ -146,7 +147,7 @@ func (r *CiliumHubbleResource) Read(ctx context.Context, req resource.ReadReques
 func (r *CiliumHubbleResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var data CiliumHubbleResourceModel
 	c := r.client
-	k8sClient, namespace := c.client, c.namespace
+	k8sClient, namespace, helm_release := c.client, c.namespace, c.helm_release
 	if k8sClient == nil {
 		resp.Diagnostics.AddError("Client Error", "Unable to connect to kubernetes")
 		return
@@ -163,6 +164,7 @@ func (r *CiliumHubbleResource) Update(ctx context.Context, req resource.UpdateRe
 	params.Namespace = namespace
 	params.UI = data.UI.ValueBool()
 	params.Relay = data.Relay.ValueBool()
+	params.HelmReleaseName = helm_release
 
 	if err := hubble.EnableWithHelm(context.Background(), k8sClient, params); err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to update Hubble: %s", err))
@@ -176,7 +178,7 @@ func (r *CiliumHubbleResource) Update(ctx context.Context, req resource.UpdateRe
 func (r *CiliumHubbleResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data CiliumHubbleResourceModel
 	c := r.client
-	k8sClient, namespace := c.client, c.namespace
+	k8sClient, namespace, helm_release := c.client, c.namespace, c.helm_release
 	if k8sClient == nil {
 		resp.Diagnostics.AddError("Client Error", "Unable to connect to kubernetes")
 		return
@@ -191,6 +193,7 @@ func (r *CiliumHubbleResource) Delete(ctx context.Context, req resource.DeleteRe
 	}
 
 	params.Namespace = namespace
+	params.HelmReleaseName = helm_release
 
 	if err := hubble.DisableWithHelm(context.Background(), k8sClient, params); err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to disable Hubble: %s", err))
