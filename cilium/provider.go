@@ -117,7 +117,7 @@ func (p *CiliumProvider) Resources(ctx context.Context) []func() resource.Resour
 		NewCiliumInstallResource,
 		NewCiliumConfigResource,
 		NewCiliumClusterMeshEnableResource,
-		//NewCiliumClusterMeshConnectResource,
+		NewCiliumClusterMeshConnectResource,
 		NewCiliumHubbleResource,
 		NewCiliumKubeProxyDisabledResource,
 	}
