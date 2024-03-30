@@ -45,15 +45,22 @@ resource "cilium" "test" {
     "cluster.id=1",
     "ipam.mode=kubernetes",
   ]
+  provider = cilium.test1
 }
 resource "cilium_clustermesh" "test" {
   service_type = "NodePort"
   depends_on   = [ cilium.test ]
+  provider = cilium.test1
+}
+
+provider "cilium" {
+  alias       = "test1"
+  context     = "kind-test1"
 }
 
 provider "cilium" {
   alias       = "test2"
-  config_path = "/tmp/test2"
+  context     = "kind-test2"
 }
 
 resource "cilium" "test2" {
@@ -70,6 +77,14 @@ resource "cilium_clustermesh" "test2" {
   service_type = "NodePort"
   depends_on   = [ cilium.test2 ]
   provider = cilium.test2
+}
+
+resource "cilium_clustermesh_connection" "test" {
+  destination_context = "kind-test2"
+  depends_on = [
+    cilium_clustermesh.test2
+    cilium_clustermesh.test
+  ]
 }
 `
 }
