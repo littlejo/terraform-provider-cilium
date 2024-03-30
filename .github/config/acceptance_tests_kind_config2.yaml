@@ -1,7 +1,7 @@
 apiVersion: kind.x-k8s.io/v1alpha4
 kind: Cluster
-name: test1
-kubeconfigPath: /tmp/test1
+name: test2
+kubeconfigPath: /tmp/test2
 nodes:
 - role: control-plane
   extraMounts:
@@ -9,5 +9,5 @@ nodes:
     containerPath: "/var/lib/kubelet/seccomp/profiles"
 networking:
   disableDefaultCNI: true
-  podSubnet: "10.1.0.0/16"
-  serviceSubnet: "172.20.1.0/24"
+  podSubnet: "10.2.0.0/16"
+  serviceSubnet: "172.20.2.0/24"

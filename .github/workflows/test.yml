@@ -75,6 +75,11 @@ jobs:
         with:
           wait: 2m
           config: .github/config/acceptance_tests_kind_config.yaml
+      - name: Setup kind 2
+        uses: helm/kind-action@99576bfa6ddf9a8e612d83b513da5a75875caced # v1.9.0
+        with:
+          wait: 2m
+          config: .github/config/acceptance_tests_kind_config2.yaml
       - run: go mod download
       - env:
           TF_ACC: "1"

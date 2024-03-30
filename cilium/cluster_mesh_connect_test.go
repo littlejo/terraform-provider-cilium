@@ -51,31 +51,9 @@ resource "cilium_clustermesh" "test" {
   depends_on   = [ cilium.test ]
 }
 
-resource "kind_cluster" "test2" {
-  name = mesh2
-  kind_config {
-    kind        = "Cluster"
-    api_version = "kind.x-k8s.io/v1alpha4"
-
-    node {
-      role = "control-plane"
-    }
-
-    node {
-      role = "worker"
-    }
-
-    networking {
-      disable_default_cni = true
-      pod_subnet          = "10.245.0.0/16"
-      service_subnet      = "10.80.0.0/12"
-    }
-  }
-}
-
 provider "cilium" {
   alias       = "test2"
-  config_path = kind_cluster.test2.kubeconfig_path
+  config_path = "/tmp/test2"
 }
 
 resource "cilium" "test2" {
