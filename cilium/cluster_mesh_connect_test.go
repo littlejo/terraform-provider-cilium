@@ -82,8 +82,8 @@ resource "cilium_clustermesh" "test2" {
 resource "cilium_clustermesh_connection" "test" {
   destination_context = "kind-test2"
   depends_on = [
-    cilium_clustermesh.test2
-    cilium_clustermesh.test
+    cilium_clustermesh.test,
+    cilium_clustermesh.test2,
   ]
 }
 `
