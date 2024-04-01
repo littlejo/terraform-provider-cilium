@@ -25,7 +25,6 @@ Install resource for Cilium. This is equivalent to cilium cli: `cilium install`,
 ### Optional
 
 - `data_path` (String) Datapath mode to use { tunnel | native | aws-eni | gke | azure | aks-byocni } (Default: `autodetected`).
-- `namespace` (String) Namespace in which to install (Default: `kube-system`).
 - `repository` (String) Helm chart repository to download Cilium charts from (Default: `https://helm.cilium.io`).
 - `reset` (Boolean) When upgrading, reset the helm values to the ones built into the chart (Default: `false`).
 - `reuse` (Boolean) When upgrading, reuse the helm values from the latest release unless any overrides from are set from other flags. This option takes precedence over HelmResetValues (Default: `true`).
