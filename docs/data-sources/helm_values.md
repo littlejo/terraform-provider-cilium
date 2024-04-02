@@ -25,10 +25,6 @@ resource "local_file" "example" {
 
 ## Schema
 
-### Optional
-
-- `release` (String) Helm release (Default: `cilium`).
-
 ### Read-Only
 
 - `yaml` (String) Yaml output
