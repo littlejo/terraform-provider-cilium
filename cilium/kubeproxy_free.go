@@ -126,11 +126,11 @@ func (r *CiliumKubeProxyDisabledResource) Configure(ctx context.Context, req res
 func (r *CiliumKubeProxyDisabledResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var data CiliumKubeProxyDisabledResourceModel
 	c := r.client
-	k8sClient := c.client
-	if k8sClient == nil {
+	if c == nil {
 		resp.Diagnostics.AddError("Client Error", "Unable to connect to kubernetes")
 		return
 	}
+	k8sClient := c.client
 
 	// Read Terraform plan data into the model
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
@@ -168,8 +168,7 @@ func (r *CiliumKubeProxyDisabledResource) Create(ctx context.Context, req resour
 func (r *CiliumKubeProxyDisabledResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data CiliumKubeProxyDisabledResourceModel
 	c := r.client
-	k8sClient := c.client
-	if k8sClient == nil {
+	if c == nil {
 		resp.Diagnostics.AddError("Client Error", "Unable to connect to kubernetes")
 		return
 	}
@@ -194,11 +193,11 @@ func (r *CiliumKubeProxyDisabledResource) Read(ctx context.Context, req resource
 func (r *CiliumKubeProxyDisabledResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var data CiliumKubeProxyDisabledResourceModel
 	c := r.client
-	k8sClient := c.client
-	if k8sClient == nil {
+	if c == nil {
 		resp.Diagnostics.AddError("Client Error", "Unable to connect to kubernetes")
 		return
 	}
+	k8sClient := c.client
 
 	// Read Terraform plan data into the model
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
@@ -228,11 +227,11 @@ func (r *CiliumKubeProxyDisabledResource) Update(ctx context.Context, req resour
 func (r *CiliumKubeProxyDisabledResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data CiliumKubeProxyDisabledResourceModel
 	c := r.client
-	k8sClient := c.client
-	if k8sClient == nil {
+	if c == nil {
 		resp.Diagnostics.AddError("Client Error", "Unable to connect to kubernetes")
 		return
 	}
+	k8sClient := c.client
 
 	// Read Terraform prior state data into the model
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
