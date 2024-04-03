@@ -154,14 +154,14 @@ func (r *CiliumInstallResource) Configure(ctx context.Context, req resource.Conf
 func (r *CiliumInstallResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var data CiliumInstallResourceModel
 	c := r.client
+	if c == nil {
+		resp.Diagnostics.AddError("Client Error", "Unable to connect to kubernetes")
+		return
+	}
 	k8sClient, namespace, helm_release := c.client, c.namespace, c.helm_release
 	var params = install.Parameters{Writer: os.Stdout}
 	var options values.Options
 
-	if k8sClient == nil {
-		resp.Diagnostics.AddError("Client Error", "Unable to connect to kubernetes")
-		return
-	}
 	// Read Terraform plan data into the model
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
 
@@ -316,17 +316,16 @@ func GetMetadata(
 func (r *CiliumInstallResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data CiliumInstallResourceModel
 	c := r.client
+	if c == nil {
+		resp.Diagnostics.AddError("Client Error", "Unable to connect to kubernetes")
+		return
+	}
 	k8sClient, namespace, helm_release := c.client, c.namespace, c.helm_release
 
 	// Read Terraform prior state data into the model
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 
 	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	if k8sClient == nil {
-		resp.Diagnostics.AddError("Client Error", "Unable to connect to kubernetes")
 		return
 	}
 
@@ -355,14 +354,13 @@ func (r *CiliumInstallResource) Read(ctx context.Context, req resource.ReadReque
 func (r *CiliumInstallResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var data CiliumInstallResourceModel
 	c := r.client
-	k8sClient, namespace, helm_release := c.client, c.namespace, c.helm_release
-	var params = install.Parameters{Writer: os.Stdout}
-	var options values.Options
-
-	if k8sClient == nil {
+	if c == nil {
 		resp.Diagnostics.AddError("Client Error", "Unable to connect to kubernetes")
 		return
 	}
+	k8sClient, namespace, helm_release := c.client, c.namespace, c.helm_release
+	var params = install.Parameters{Writer: os.Stdout}
+	var options values.Options
 
 	// Read Terraform plan data into the model
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
@@ -435,11 +433,11 @@ func (r *CiliumInstallResource) Update(ctx context.Context, req resource.UpdateR
 func (r *CiliumInstallResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data CiliumInstallResourceModel
 	c := r.client
-	k8sClient, namespace, helm_release := c.client, c.namespace, c.helm_release
-	if k8sClient == nil {
+	if c == nil {
 		resp.Diagnostics.AddError("Client Error", "Unable to connect to kubernetes")
 		return
 	}
+	k8sClient, namespace, helm_release := c.client, c.namespace, c.helm_release
 	var params = install.UninstallParameters{Writer: os.Stdout}
 
 	// Read Terraform prior state data into the model

@@ -101,11 +101,11 @@ func (r *CiliumConfigResource) Configure(ctx context.Context, req resource.Confi
 func (r *CiliumConfigResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var data CiliumConfigResourceModel
 	c := r.client
-	k8sClient, namespace := c.client, c.namespace
-	if k8sClient == nil {
+	if c == nil {
 		resp.Diagnostics.AddError("Client Error", "Unable to connect to kubernetes")
 		return
 	}
+	k8sClient, namespace := c.client, c.namespace
 	var params = config.Parameters{
 		Writer: os.Stdout,
 	}
@@ -142,12 +142,11 @@ func (r *CiliumConfigResource) Create(ctx context.Context, req resource.CreateRe
 func (r *CiliumConfigResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data CiliumConfigResourceModel
 	c := r.client
-
-	k8sClient, namespace := c.client, c.namespace
-	if k8sClient == nil {
+	if c == nil {
 		resp.Diagnostics.AddError("Client Error", "Unable to connect to kubernetes")
 		return
 	}
+	k8sClient, namespace := c.client, c.namespace
 	var params = config.Parameters{
 		Writer: os.Stdout,
 	}
@@ -208,11 +207,11 @@ func (r *CiliumConfigResource) Read(ctx context.Context, req resource.ReadReques
 func (r *CiliumConfigResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var data CiliumConfigResourceModel
 	c := r.client
-	k8sClient, namespace := c.client, c.namespace
-	if k8sClient == nil {
+	if c == nil {
 		resp.Diagnostics.AddError("Client Error", "Unable to connect to kubernetes")
 		return
 	}
+	k8sClient, namespace := c.client, c.namespace
 	var params = config.Parameters{
 		Writer: os.Stdout,
 	}
@@ -242,11 +241,11 @@ func (r *CiliumConfigResource) Update(ctx context.Context, req resource.UpdateRe
 func (r *CiliumConfigResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data CiliumConfigResourceModel
 	c := r.client
-	k8sClient, namespace := c.client, c.namespace
-	if k8sClient == nil {
+	if c == nil {
 		resp.Diagnostics.AddError("Client Error", "Unable to connect to kubernetes")
 		return
 	}
+	k8sClient, namespace := c.client, c.namespace
 	var params = config.Parameters{
 		Writer: os.Stdout,
 	}

@@ -74,11 +74,11 @@ func (d *CiliumHelmValuesDataSource) Configure(ctx context.Context, req datasour
 func (d *CiliumHelmValuesDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data CiliumHelmValuesDataSourceModel
 	c := d.client
-	k8sClient, namespace, helm_release := c.client, c.namespace, c.helm_release
-	if k8sClient == nil {
+	if c == nil {
 		resp.Diagnostics.AddError("Client Error", "Unable to connect to kubernetes")
 		return
 	}
+	k8sClient, namespace, helm_release := c.client, c.namespace, c.helm_release
 
 	// Read Terraform configuration data into the model
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
