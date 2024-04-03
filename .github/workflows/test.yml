@@ -73,7 +73,7 @@ jobs:
       - name: Setup kind
         uses: helm/kind-action@99576bfa6ddf9a8e612d83b513da5a75875caced # v1.9.0
         with:
-          wait: 2m
+          wait: 0
           config: .github/config/acceptance_tests_kind_config.yaml
       - run: go mod download
       - env:
@@ -107,7 +107,7 @@ jobs:
       - name: Setup kind
         uses: helm/kind-action@99576bfa6ddf9a8e612d83b513da5a75875caced # v1.9.0
         with:
-          wait: 2m
+          wait: 0
           config: .github/config/acceptance_tests_kind_config.yaml
       - run: go mod download
       - env:
@@ -138,13 +138,13 @@ jobs:
       - name: Setup kind test1
         uses: helm/kind-action@99576bfa6ddf9a8e612d83b513da5a75875caced # v1.9.0
         with:
-          wait: 2m
+          wait: 0
           config: .github/config/acceptance_tests_kind_config.yaml
           cluster_name: "test1"
       - name: Setup kind test2
         uses: helm/kind-action@99576bfa6ddf9a8e612d83b513da5a75875caced # v1.9.0
         with:
-          wait: 2m
+          wait: 0
           config: .github/config/acceptance_tests_kind_config2.yaml
           cluster_name: "test2"
       - run: make
