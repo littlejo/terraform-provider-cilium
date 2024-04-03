@@ -154,3 +154,39 @@ jobs:
         working-directory: .github/tf/clustermesh
       - run: tofu destroy -auto-approve
         working-directory: .github/tf/clustermesh
+
+  test-kubeproxy-free:
+    name: "Functionnal test: kubeproxy-free"
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        # list whatever tofu versions here you would like to support
+        tofu:
+          - '1.6.*'
+    steps:
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      - uses: actions/setup-go@0c52d547c9bc32b1aa3301fd7a9cb496313a4491 # v5.0.0
+        with:
+          go-version-file: 'go.mod'
+          cache: true
+      - uses: opentofu/setup-opentofu@v1
+        with:
+          tofu_version: ${{ matrix.tofu }}
+          tofu_wrapper: true
+      - name: Setup kind test1
+        uses: helm/kind-action@99576bfa6ddf9a8e612d83b513da5a75875caced # v1.9.0
+        with:
+          wait: 0
+          config: .github/config/acceptance_tests_kind_config.yaml
+          cluster_name: "test1"
+      - run: make
+      - run: tofu init
+        working-directory: .github/tf/kubeproxy-free
+      - run: tofu apply -auto-approve
+        working-directory: .github/tf/kubeproxy-free
+      - run: kubectl get ds/kube-proxy -n kube-system -o jsonpath='{.status.currentNumberScheduled}' | grep -q 0
+      - run: tofu destroy -auto-approve
+        working-directory: .github/tf/kubeproxy-free
+      - run: kubectl get ds/kube-proxy -n kube-system -o jsonpath='{.status.currentNumberScheduled}' | grep -q 1 #Should be improved: currentNumberScheduled => numberReady
