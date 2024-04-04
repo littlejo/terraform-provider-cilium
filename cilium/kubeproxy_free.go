@@ -73,36 +73,6 @@ func (r *CiliumKubeProxyDisabledResource) Schema(ctx context.Context, req resour
 	}
 }
 
-func (r *CiliumKubeProxyDisabledResource) CheckDaemonsetStatus(ctx context.Context, namespace, daemonset string) error {
-	c := r.client
-	k8sClient := c.client
-	d, _ := k8sClient.GetDaemonSet(ctx, namespace, daemonset, metav1.GetOptions{})
-	if d == nil {
-		return nil
-	}
-
-	if d.Status.NumberReady != 0 {
-		return fmt.Errorf("replicas count is not zero")
-	}
-
-	return nil
-}
-
-func (r *CiliumKubeProxyDisabledResource) CheckDaemonsetAvailability(ctx context.Context, namespace, daemonset string) error {
-	c := r.client
-	k8sClient := c.client
-	d, err := k8sClient.GetDaemonSet(ctx, namespace, daemonset, metav1.GetOptions{})
-	if err != nil {
-		return err
-	}
-
-	if d == nil {
-		return fmt.Errorf("daemonset is not available")
-	}
-
-	return nil
-}
-
 func (r *CiliumKubeProxyDisabledResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
 	// Prevent panic if the provider has not been configured.
 	if req.ProviderData == nil {
@@ -144,7 +114,7 @@ func (r *CiliumKubeProxyDisabledResource) Create(ctx context.Context, req resour
 	nodeSelectorValue := "true"
 	patch := []byte(fmt.Sprintf(`{"spec":{"template":{"spec":{"nodeSelector":{"%s":"%s"}}}}}`, nodeSelectorKey, nodeSelectorValue))
 
-	if err := r.CheckDaemonsetAvailability(ctx, namespace, name); err != nil {
+	if err := c.CheckDaemonsetAvailability(ctx, namespace, name); err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("%s", err))
 	}
 
@@ -181,7 +151,7 @@ func (r *CiliumKubeProxyDisabledResource) Read(ctx context.Context, req resource
 	}
 	name := data.Name.ValueString()
 	namespace := data.Namespace.ValueString()
-	if err := r.CheckDaemonsetStatus(ctx, namespace, name); err != nil {
+	if err := c.CheckDaemonsetStatus(ctx, namespace, name); err != nil {
 		resp.State.RemoveResource(ctx)
 		return
 	}
@@ -211,7 +181,7 @@ func (r *CiliumKubeProxyDisabledResource) Update(ctx context.Context, req resour
 	nodeSelectorValue := "true"
 	patch := []byte(fmt.Sprintf(`{"spec":{"template":{"spec":{"nodeSelector":{"%s":"%s"}}}}}`, nodeSelectorKey, nodeSelectorValue))
 
-	if err := r.CheckDaemonsetAvailability(ctx, namespace, name); err != nil {
+	if err := c.CheckDaemonsetAvailability(ctx, namespace, name); err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("%s", err))
 	}
 
@@ -245,7 +215,7 @@ func (r *CiliumKubeProxyDisabledResource) Delete(ctx context.Context, req resour
 	nodeSelectorKey := "non-existing"
 	patch := []byte(fmt.Sprintf(`[{"op":"remove","path":"/spec/template/spec/nodeSelector/%s"}]`, nodeSelectorKey))
 
-	if err := r.CheckDaemonsetAvailability(ctx, namespace, name); err != nil {
+	if err := c.CheckDaemonsetAvailability(ctx, namespace, name); err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("%s", err))
 	}
 

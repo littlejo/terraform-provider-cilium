@@ -28,22 +28,12 @@ type CiliumProvider struct {
 	version string
 }
 
-type CiliumClient struct {
-	client       *k8s.Client
-	namespace    string
-	helm_release string
-}
-
 // CiliumProviderModel describes the provider data model.
 type CiliumProviderModel struct {
 	Context     types.String `tfsdk:"context"`
 	ConfigPath  types.String `tfsdk:"config_path"`
 	Namespace   types.String `tfsdk:"namespace"`
 	HelmRelease types.String `tfsdk:"helm_release"`
-}
-
-func ConcatDefault(text string, d string) string {
-	return fmt.Sprintf("%s (Default: `%s`).", text, d)
 }
 
 func (p *CiliumProvider) Metadata(ctx context.Context, req provider.MetadataRequest, resp *provider.MetadataResponse) {

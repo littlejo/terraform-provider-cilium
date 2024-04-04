@@ -11,12 +11,7 @@ import (
 	"github.com/cilium/cilium-cli/connectivity/check"
 	"github.com/cilium/cilium-cli/defaults"
 	"github.com/cilium/cilium-cli/install"
-	"github.com/cilium/cilium-cli/k8s"
-	"github.com/cilium/cilium-cli/status"
-	"gopkg.in/yaml.v3"
-	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/cli/values"
-	"helm.sh/helm/v3/pkg/release"
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -216,14 +211,12 @@ func (r *CiliumInstallResource) Create(ctx context.Context, req resource.CreateR
 	}
 
 	if wait {
-		if err := r.Wait(); err != nil {
+		if err := c.Wait(); err != nil {
 			return
 		}
 	}
-	// For the purposes of this example code, hardcoding a response value to
-	// save into the Terraform state.
-	data.Id = types.StringValue("cilium")
-	helm_values, err := GetHelmValues(k8sClient, namespace, "cilium")
+	data.Id = types.StringValue(helm_release)
+	helm_values, err := c.GetHelmValues()
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to install Cilium: %s", err))
 		return
@@ -238,81 +231,6 @@ func (r *CiliumInstallResource) Create(ctx context.Context, req resource.CreateR
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (r *CiliumInstallResource) Wait() (err error) {
-	var status_params = status.K8sStatusParameters{}
-	status_params.Namespace = r.client.namespace
-	status_params.Wait = true
-	status_params.WaitDuration = defaults.StatusWaitDuration
-	collector, err := status.NewK8sStatusCollector(r.client.client, status_params)
-	if err != nil {
-		return err
-	}
-	_, err = collector.Status(context.Background())
-	return err
-}
-
-func GetCurrentRelease(
-	k8sClient *k8s.Client,
-	namespace, name string,
-) (*release.Release, error) {
-	// Use the default Helm driver (Kubernetes secret).
-	helmDriver := ""
-	actionConfig := action.Configuration{}
-	logger := func(format string, v ...interface{}) {}
-	if err := actionConfig.Init(k8sClient.RESTClientGetter, namespace, helmDriver, logger); err != nil {
-		return nil, err
-	}
-	currentRelease, err := actionConfig.Releases.Last(name)
-	if err != nil {
-		return nil, err
-	}
-	return currentRelease, nil
-}
-
-func GetHelmValues(
-	k8sClient *k8s.Client,
-	namespace, name string,
-) (string, error) {
-	helmDriver := ""
-	actionConfig := action.Configuration{}
-	logger := func(format string, v ...interface{}) {}
-	if err := actionConfig.Init(k8sClient.RESTClientGetter, namespace, helmDriver, logger); err != nil {
-		return "", err
-	}
-	client := action.NewGetValues(&actionConfig)
-
-	vals, err := client.Run(name)
-	if err != nil {
-		return "", err
-	}
-
-	yaml, err := yaml.Marshal(vals)
-	if err != nil {
-		return "", err
-	}
-	return string(yaml), nil
-}
-
-func GetMetadata(
-	k8sClient *k8s.Client,
-	namespace, name string,
-) (string, error) {
-	helmDriver := ""
-	actionConfig := action.Configuration{}
-	logger := func(format string, v ...interface{}) {}
-	if err := actionConfig.Init(k8sClient.RESTClientGetter, namespace, helmDriver, logger); err != nil {
-		return "", err
-	}
-	client := action.NewGetMetadata(&actionConfig)
-
-	vals, err := client.Run(name)
-	if err != nil {
-		return "", err
-	}
-
-	return vals.AppVersion, nil
-}
-
 func (r *CiliumInstallResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data CiliumInstallResourceModel
 	c := r.client
@@ -320,7 +238,6 @@ func (r *CiliumInstallResource) Read(ctx context.Context, req resource.ReadReque
 		resp.Diagnostics.AddError("Client Error", "Unable to connect to kubernetes")
 		return
 	}
-	k8sClient, namespace, helm_release := c.client, c.namespace, c.helm_release
 
 	// Read Terraform prior state data into the model
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
@@ -329,17 +246,17 @@ func (r *CiliumInstallResource) Read(ctx context.Context, req resource.ReadReque
 		return
 	}
 
-	_, err := GetCurrentRelease(k8sClient, namespace, helm_release)
+	_, err := c.GetCurrentRelease()
 	if err != nil {
 		resp.State.RemoveResource(ctx)
 		return
 	}
-	helm_values, err := GetHelmValues(k8sClient, namespace, helm_release)
+	helm_values, err := c.GetHelmValues()
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read tfstate: %s", err))
 		return
 	}
-	version, err := GetMetadata(k8sClient, namespace, "cilium")
+	version, err := c.GetMetadata()
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read tfstate: %s", err))
 		return
@@ -415,12 +332,12 @@ func (r *CiliumInstallResource) Update(ctx context.Context, req resource.UpdateR
 		return
 	}
 	if wait {
-		if err := r.Wait(); err != nil {
+		if err := c.Wait(); err != nil {
 			return
 		}
 	}
 
-	helm_values, err := GetHelmValues(k8sClient, namespace, helm_release)
+	helm_values, err := c.GetHelmValues()
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to upgrade Cilium: %s", err))
 		return
