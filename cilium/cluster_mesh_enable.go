@@ -141,7 +141,7 @@ func (r *CiliumClusterMeshEnableResource) Create(ctx context.Context, req resour
 	}
 
 	if wait {
-		if err := r.Wait(); err != nil {
+		if err := c.WaitClusterMesh(); err != nil {
 			resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to enable ClusterMesh: %s", err))
 			return
 		}
@@ -157,18 +157,6 @@ func (r *CiliumClusterMeshEnableResource) Create(ctx context.Context, req resour
 
 	// Save data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
-}
-
-func (r *CiliumClusterMeshEnableResource) Wait() (err error) {
-	var params = clustermesh.Parameters{Writer: os.Stdout}
-	params.Namespace = r.client.namespace
-	params.Wait = true
-	params.WaitDuration = 2 * time.Minute
-	cm := clustermesh.NewK8sClusterMesh(r.client.client, params)
-	if _, err := cm.Status(context.Background()); err != nil {
-		return err
-	}
-	return nil
 }
 
 func (r *CiliumClusterMeshEnableResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
@@ -238,7 +226,7 @@ func (r *CiliumClusterMeshEnableResource) Update(ctx context.Context, req resour
 	}
 
 	if wait {
-		if err := r.Wait(); err != nil {
+		if err := c.WaitClusterMesh(); err != nil {
 			resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to enable ClusterMesh: %s", err))
 			return
 		}
