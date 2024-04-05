@@ -8,8 +8,8 @@ The Cilium Provider allows Terraform to manage [Cilium](https://cilium.io/) reso
 Requirements
 ------------
 
-- [Terraform](https://www.terraform.io/downloads.html) 1.5.X
-- [Go](https://golang.org/doc/install) 1.21 (to build the provider plugin)
+- [Terraform](https://www.terraform.io/downloads.html) > 1.5 or [OpenTofu](https://opentofu.org/docs/intro/install/) > 1.6
+- [Go](https://golang.org/doc/install) 1.22 (to build the provider plugin)
 
 Building The Provider
 ---------------------
@@ -78,7 +78,7 @@ $ terraform apply
 Developing the Provider
 ---------------------------
 
-If you wish to work on the provider, you'll first need [Go](http://www.golang.org) installed on your machine (version 1.21+ is *required*). You'll also need to correctly setup a [GOPATH](http://golang.org/doc/code.html#GOPATH), as well as adding `$GOPATH/bin` to your `$PATH`.
+If you wish to work on the provider, you'll first need [Go](http://www.golang.org) installed on your machine (version 1.22+ is *required*). You'll also need to correctly setup a [GOPATH](http://golang.org/doc/code.html#GOPATH), as well as adding `$GOPATH/bin` to your `$PATH`.
 
 To compile the provider, run `make build`. This will build the provider and put the provider binary in the `$GOPATH/bin` directory.
 
@@ -95,10 +95,10 @@ In order to test the provider, you can simply run `make test`.
 $ make test
 ```
 
-In order to run the full suite of Acceptance tests you will need to create a kubernetes cluster like kind. You also can test on some examples:
+In order to run the full suite of Acceptance tests you will need to create a kubernetes cluster like kind. You can also test on some examples:
 * https://github.com/littlejo/terraform-kind-cilium
 * https://github.com/littlejo/terraform-kind-cilium-clustermesh
-
+* https://github.com/littlejo/terraform-provider-cilium/tree/main/.github/tf
 
 # Contributing
 
