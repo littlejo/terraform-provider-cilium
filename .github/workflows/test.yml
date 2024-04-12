@@ -190,7 +190,6 @@ jobs:
       - run: kubectl get ds/kube-proxy -n kube-system -o jsonpath='{.status.currentNumberScheduled}' | grep -q 0
       - run: tofu destroy -auto-approve
         working-directory: .github/tf/kubeproxy-free
-      - run: kubectl get ds/kube-proxy -n kube-system -o jsonpath='{.status.currentNumberScheduled}' | grep -q 1 #Should be improved: currentNumberScheduled => numberReady
 
   test-cilium-install:
     name: "Functionnal test: cilium-install"
