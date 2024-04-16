@@ -4,7 +4,7 @@ go 1.22.2
 
 require (
 	github.com/cilium/cilium-cli v0.16.4
-	github.com/hashicorp/terraform-plugin-docs v0.18.0
+	github.com/hashicorp/terraform-plugin-docs v0.19.0
 	github.com/hashicorp/terraform-plugin-framework v1.7.0
 	github.com/hashicorp/terraform-plugin-go v0.22.1
 	github.com/hashicorp/terraform-plugin-log v0.9.0
@@ -25,7 +25,7 @@ require (
 	github.com/Masterminds/sprig/v3 v3.2.3 // indirect
 	github.com/Masterminds/squirrel v1.5.4 // indirect
 	github.com/Microsoft/hcsshim v0.11.4 // indirect
-	github.com/ProtonMail/go-crypto v1.1.0-alpha.0 // indirect
+	github.com/ProtonMail/go-crypto v1.1.0-alpha.2 // indirect
 	github.com/agext/levenshtein v1.2.2 // indirect
 	github.com/apparentlymart/go-textseg/v15 v15.0.0 // indirect
 	github.com/armon/go-radix v1.0.0 // indirect
@@ -33,6 +33,7 @@ require (
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bgentry/speakeasy v0.1.0 // indirect
 	github.com/blang/semver/v4 v4.0.0 // indirect
+	github.com/bmatcuk/doublestar/v4 v4.6.1 // indirect
 	github.com/census-instrumentation/opencensus-proto v0.4.1 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/chai2010/gettext-go v1.0.2 // indirect
@@ -105,7 +106,7 @@ require (
 	github.com/hashicorp/go-uuid v1.0.3 // indirect
 	github.com/hashicorp/go-version v1.6.0 // indirect
 	github.com/hashicorp/golang-lru/v2 v2.0.7 // indirect
-	github.com/hashicorp/hc-install v0.6.3 // indirect
+	github.com/hashicorp/hc-install v0.6.4 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/hashicorp/hcl/v2 v2.20.0 // indirect
 	github.com/hashicorp/logutils v1.0.0 // indirect
@@ -167,7 +168,6 @@ require (
 	github.com/rivo/uniseg v0.4.4 // indirect
 	github.com/rogpeppe/go-internal v1.12.0 // indirect
 	github.com/rubenv/sql-migrate v1.5.2 // indirect
-	github.com/russross/blackfriday v1.6.0 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/sagikazarmark/locafero v0.4.0 // indirect
 	github.com/sagikazarmark/slog-shim v0.1.0 // indirect
@@ -191,11 +191,12 @@ require (
 	github.com/xeipuuv/gojsonreference v0.0.0-20180127040603-bd5ef7bd5415 // indirect
 	github.com/xeipuuv/gojsonschema v1.2.0 // indirect
 	github.com/xlab/treeprint v1.2.0 // indirect
-	github.com/yuin/goldmark v1.6.0 // indirect
+	github.com/yuin/goldmark v1.7.0 // indirect
 	github.com/yuin/goldmark-meta v1.1.0 // indirect
-	github.com/zclconf/go-cty v1.14.3 // indirect
+	github.com/zclconf/go-cty v1.14.4 // indirect
 	github.com/zmap/zcrypto v0.0.0-20230310154051-c8b263fd8300 // indirect
 	github.com/zmap/zlint/v3 v3.5.0 // indirect
+	go.abhg.dev/goldmark/frontmatter v0.2.0 // indirect
 	go.mongodb.org/mongo-driver v1.14.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.45.0 // indirect
 	go.opentelemetry.io/otel v1.24.0 // indirect
@@ -208,7 +209,7 @@ require (
 	go4.org/netipx v0.0.0-20231129151722-fdeea329fbba // indirect
 	golang.org/x/crypto v0.21.0 // indirect
 	golang.org/x/exp v0.0.0-20240222234643-814bf88cf225 // indirect
-	golang.org/x/mod v0.15.0 // indirect
+	golang.org/x/mod v0.16.0 // indirect
 	golang.org/x/net v0.22.0 // indirect
 	golang.org/x/oauth2 v0.18.0 // indirect
 	golang.org/x/sync v0.6.0 // indirect
