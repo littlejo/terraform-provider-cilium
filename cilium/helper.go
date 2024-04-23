@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	"os"
 	"time"
@@ -16,7 +17,15 @@ import (
 	"gopkg.in/yaml.v3"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/release"
+
+	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 )
+
+var CaAttributeTypes = map[string]attr.Type{
+	"crt": types.StringType,
+	"key": types.StringType,
+}
 
 type CiliumClient struct {
 	client       *k8s.Client
@@ -75,6 +84,20 @@ func (c *CiliumClient) GetHelmValues() (string, error) {
 		return "", err
 	}
 	return string(yaml), nil
+}
+
+func (c *CiliumClient) GetCA(ctx context.Context) (map[string]attr.Value, error) {
+	k8sClient := c.client
+	s, err := k8sClient.GetSecret(ctx, c.namespace, "cilium-ca", metav1.GetOptions{})
+	if err != nil {
+		return map[string]attr.Value{}, err
+	}
+	ca := map[string]attr.Value{
+		"key": types.StringValue(base64.StdEncoding.EncodeToString(s.Data["ca.key"])),
+		"crt": types.StringValue(base64.StdEncoding.EncodeToString(s.Data["ca.crt"])),
+	}
+
+	return ca, nil
 }
 
 func (c *CiliumClient) GetMetadata() (string, error) {

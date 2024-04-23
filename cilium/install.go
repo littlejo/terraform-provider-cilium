@@ -50,6 +50,7 @@ type CiliumInstallResourceModel struct {
 	Reset      types.Bool   `tfsdk:"reset"`
 	Id         types.String `tfsdk:"id"`
 	HelmValues types.String `tfsdk:"helm_values"`
+	CA         types.Object `tfsdk:"ca"`
 }
 
 func (r *CiliumInstallResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -62,6 +63,11 @@ func (r *CiliumInstallResource) Schema(ctx context.Context, req resource.SchemaR
 		MarkdownDescription: "Install resource for Cilium. This is equivalent to cilium cli: `cilium install`, `cilium upgrade` and `cilium uninstall`: It manages cilium helm chart",
 
 		Attributes: map[string]schema.Attribute{
+			"ca": schema.ObjectAttribute{
+				AttributeTypes: CaAttributeTypes,
+				Computed:       true,
+				Sensitive:      true,
+			},
 			"set": schema.ListAttribute{
 				ElementType:         types.StringType,
 				MarkdownDescription: ConcatDefault("Set helm values on the command line (can specify multiple or separate values with commas: key1=val1,key2=val2", "[]"),
@@ -221,6 +227,12 @@ func (r *CiliumInstallResource) Create(ctx context.Context, req resource.CreateR
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to install Cilium: %s", err))
 		return
 	}
+	ca, err := c.GetCA(ctx)
+	if err != nil {
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to retrieve cilium-ca: %s", err))
+		return
+	}
+	data.CA = types.ObjectValueMust(CaAttributeTypes, ca)
 	data.HelmValues = types.StringValue(helm_values)
 
 	// Write logs using the tflog package
@@ -261,6 +273,12 @@ func (r *CiliumInstallResource) Read(ctx context.Context, req resource.ReadReque
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read tfstate: %s", err))
 		return
 	}
+	ca, err := c.GetCA(ctx)
+	if err != nil {
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to retrieve cilium-ca: %s", err))
+		return
+	}
+	data.CA = types.ObjectValueMust(CaAttributeTypes, ca)
 	data.HelmValues = types.StringValue(helm_values)
 	data.Version = types.StringValue(version)
 
@@ -342,6 +360,12 @@ func (r *CiliumInstallResource) Update(ctx context.Context, req resource.UpdateR
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to upgrade Cilium: %s", err))
 		return
 	}
+	ca, err := c.GetCA(ctx)
+	if err != nil {
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to retrieve cilium-ca: %s", err))
+		return
+	}
+	data.CA = types.ObjectValueMust(CaAttributeTypes, ca)
 	data.HelmValues = types.StringValue(helm_values)
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)

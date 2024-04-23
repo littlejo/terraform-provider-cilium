@@ -65,3 +65,4 @@ resource "cilium" "example" {
 
 - `id` (String) Cilium install identifier
 - `helm_values` (String) Helm values (`helm get values -n kube-system cilium`)
+- `ca` (Object, sensitive) Cilium certificates value, Format: `{crt: "b64...", key: "b64.."}` (Equivalent to `kubectl get secret cilium-ca -n kube-system -o yaml`)
