@@ -71,7 +71,7 @@ jobs:
           tofu_version: ${{ matrix.tofu }}
           tofu_wrapper: false
       - name: Setup kind
-        uses: helm/kind-action@99576bfa6ddf9a8e612d83b513da5a75875caced # v1.9.0
+        uses: helm/kind-action@0025e74a8c7512023d06dc019c617aa3cf561fde # v1.10.0
         with:
           wait: 0
           config: .github/config/acceptance_tests_kind_config.yaml
@@ -106,7 +106,7 @@ jobs:
           terraform_version: ${{ matrix.terraform }}
           terraform_wrapper: false
       - name: Setup kind
-        uses: helm/kind-action@99576bfa6ddf9a8e612d83b513da5a75875caced # v1.9.0
+        uses: helm/kind-action@0025e74a8c7512023d06dc019c617aa3cf561fde # v1.10.0
         with:
           wait: 0
           config: .github/config/acceptance_tests_kind_config.yaml
@@ -137,13 +137,13 @@ jobs:
           tofu_version: ${{ matrix.tofu }}
           tofu_wrapper: true
       - name: Setup kind test1
-        uses: helm/kind-action@99576bfa6ddf9a8e612d83b513da5a75875caced # v1.9.0
+        uses: helm/kind-action@0025e74a8c7512023d06dc019c617aa3cf561fde # v1.10.0
         with:
           wait: 0
           config: .github/config/acceptance_tests_kind_config.yaml
           cluster_name: "test1"
       - name: Setup kind test2
-        uses: helm/kind-action@99576bfa6ddf9a8e612d83b513da5a75875caced # v1.9.0
+        uses: helm/kind-action@0025e74a8c7512023d06dc019c617aa3cf561fde # v1.10.0
         with:
           wait: 0
           config: .github/config/acceptance_tests_kind_config2.yaml
@@ -177,7 +177,7 @@ jobs:
           tofu_version: ${{ matrix.tofu }}
           tofu_wrapper: true
       - name: Setup kind test1
-        uses: helm/kind-action@99576bfa6ddf9a8e612d83b513da5a75875caced # v1.9.0
+        uses: helm/kind-action@0025e74a8c7512023d06dc019c617aa3cf561fde # v1.10.0
         with:
           wait: 0
           config: .github/config/acceptance_tests_kind_config.yaml
@@ -212,7 +212,7 @@ jobs:
           tofu_version: ${{ matrix.tofu }}
           tofu_wrapper: true
       - name: Setup kind test1
-        uses: helm/kind-action@99576bfa6ddf9a8e612d83b513da5a75875caced # v1.9.0
+        uses: helm/kind-action@0025e74a8c7512023d06dc019c617aa3cf561fde # v1.10.0
         with:
           wait: 0
           config: .github/config/acceptance_tests_kind_config.yaml
