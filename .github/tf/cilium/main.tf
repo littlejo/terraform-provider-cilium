@@ -31,3 +31,7 @@ resource "cilium" "preflight" {
   ]
   provider = cilium.preflight
 }
+
+output "cilium_ca" {
+  value = nonsensitive(cilium.this.ca)
+}
