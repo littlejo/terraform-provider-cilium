@@ -96,9 +96,8 @@ $ make test
 ```
 
 In order to run the full suite of Acceptance tests you will need to create a kubernetes cluster like kind. You can also test on some examples:
-* https://github.com/littlejo/terraform-kind-cilium
-* https://github.com/littlejo/terraform-kind-cilium-clustermesh
-* https://github.com/littlejo/terraform-provider-cilium/tree/main/.github/tf
+* Examples of some cloud providers (AWS, Azure and GCP): https://github.com/orgs/tf-cilium/repositories
+* Examples from the CICD: https://github.com/littlejo/terraform-provider-cilium/tree/main/.github/tf
 
 # Contributing
 

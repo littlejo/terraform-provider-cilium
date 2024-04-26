@@ -27,5 +27,3 @@ resource "cilium" "example" {
   ]
   version = "1.14.5"
 }
-
-#Complete example: https://github.com/littlejo/terraform-kind-cilium
