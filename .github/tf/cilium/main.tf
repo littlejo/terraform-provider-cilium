@@ -20,6 +20,10 @@ provider "cilium" {
 
 resource "cilium" "this" {
   version  = "1.15.2"
+  set = [
+    "hubble.relay.enabled=true",
+    "hubble.ui.enabled=true",
+  ]
 }
 
 resource "cilium" "preflight" {
