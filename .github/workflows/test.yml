@@ -149,6 +149,7 @@ jobs:
           config: .github/config/acceptance_tests_kind_config2.yaml
           cluster_name: "test2"
       - run: make
+      - run: cp .github/tf/versions.tf .github/tf/clustermesh
       - run: tofu init
         working-directory: .github/tf/clustermesh
       - run: tofu apply -auto-approve
@@ -183,6 +184,7 @@ jobs:
           config: .github/config/acceptance_tests_kind_config.yaml
           cluster_name: "test1"
       - run: make
+      - run: cp .github/tf/versions.tf .github/tf/kubeproxy-free
       - run: tofu init
         working-directory: .github/tf/kubeproxy-free
       - run: tofu apply -auto-approve
@@ -218,6 +220,7 @@ jobs:
           config: .github/config/acceptance_tests_kind_config.yaml
           cluster_name: "test1"
       - run: make
+      - run: cp .github/tf/versions.tf .github/tf/cilium/
       - run: kubectl create namespace cilium
       - run: tofu init
         working-directory: .github/tf/cilium
