@@ -80,6 +80,8 @@ github.com/cilium/charts v0.0.0-20240315160837-a5bec4908d75 h1:rXyT+wNIzN3GO/hOY
 github.com/cilium/charts v0.0.0-20240315160837-a5bec4908d75/go.mod h1:M3C9VOlFvRzuV+a01t07Tw4uFLSfkCH3L542IWjf6BU=
 github.com/cilium/charts v0.0.0-20240412005400-642475010da3 h1:GeBpZKu0XMHBFXFLnNhZUBqHbO8ZSWxxuRNCV/GgkcE=
 github.com/cilium/charts v0.0.0-20240412005400-642475010da3/go.mod h1:M3C9VOlFvRzuV+a01t07Tw4uFLSfkCH3L542IWjf6BU=
+github.com/cilium/charts v0.0.0-20240422153434-d93188bc52aa h1:0nPvdJiQZP8/J7iIrfyNq09albQhcfZAA0rwh8UcryQ=
+github.com/cilium/charts v0.0.0-20240422153434-d93188bc52aa/go.mod h1:M3C9VOlFvRzuV+a01t07Tw4uFLSfkCH3L542IWjf6BU=
 github.com/cilium/checkmate v1.0.3 h1:CQC5eOmlAZeEjPrVZY3ZwEBH64lHlx9mXYdUehEwI5w=
 github.com/cilium/checkmate v1.0.3/go.mod h1:KiBTasf39/F2hf2yAmHw21YFl3hcEyP4Yk6filxc12A=
 github.com/cilium/cilium v1.16.0-pre.0 h1:JZPJzVbdA9p7gzq63vWtNgVWYg7Ei3DHf7Ub0RhobbM=
@@ -90,6 +92,8 @@ github.com/cilium/cilium-cli v0.16.4 h1:z9+krT54GUJb8MvS9xmQ10t7LS5VAj1tOYhmiv9R
 github.com/cilium/cilium-cli v0.16.4/go.mod h1:0lh4TNUTeJwDBGt6j1f7MwBmvpoCpMLvArydhP2K02Y=
 github.com/cilium/cilium-cli v0.16.5 h1:Jxq7rGF3ZJe28ia2TU1Y4rmpS8+WWvjhRc6gXaY+yWQ=
 github.com/cilium/cilium-cli v0.16.5/go.mod h1:xuAw1DUcUsNQnR9Yy3oviOlhEl4txFNKcpBlC+NjhBc=
+github.com/cilium/cilium-cli v0.16.6 h1:mFZ1mBLudsPUYyKYb9xGVUeAQUmVFbGml73Q1ZN3TWI=
+github.com/cilium/cilium-cli v0.16.6/go.mod h1:mmNIN+ijn6p3Fw2mgIfn0bABNTgXXDQFUwMOjTHN1C4=
 github.com/cilium/ebpf v0.13.2 h1:uhLimLX+jF9BTPPvoCUYh/mBeoONkjgaJ9w9fn0mRj4=
 github.com/cilium/ebpf v0.13.2/go.mod h1:DHp1WyrLeiBh19Cf/tfiSMhqheEiK8fXFZ4No0P1Hso=
 github.com/cilium/hubble v0.13.2 h1:WecdQMW+Iz0+mQ56uLYmbfI6bnW0o0PZzmYl18ppd9E=

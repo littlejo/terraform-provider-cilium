@@ -3,7 +3,8 @@ module github.com/littlejo/terraform-provider-cilium
 go 1.22.2
 
 require (
-	github.com/cilium/cilium-cli v0.16.5
+	github.com/cilium/cilium v1.16.0-pre.1
+	github.com/cilium/cilium-cli v0.16.6
 	github.com/hashicorp/terraform-plugin-docs v0.19.2
 	github.com/hashicorp/terraform-plugin-framework v1.8.0
 	github.com/hashicorp/terraform-plugin-go v0.22.2
@@ -37,8 +38,7 @@ require (
 	github.com/census-instrumentation/opencensus-proto v0.4.1 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/chai2010/gettext-go v1.0.2 // indirect
-	github.com/cilium/charts v0.0.0-20240412005400-642475010da3 // indirect
-	github.com/cilium/cilium v1.16.0-pre.1 // indirect
+	github.com/cilium/charts v0.0.0-20240422153434-d93188bc52aa // indirect
 	github.com/cilium/ebpf v0.13.2 // indirect
 	github.com/cilium/hubble v0.13.3 // indirect
 	github.com/cilium/proxy v0.0.0-20231031145409-f19708f3d018 // indirect
