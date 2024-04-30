@@ -13,5 +13,3 @@ resource "cilium_clustermesh" "example" {
     cilium.example
   ]
 }
-
-# Complete example: https://github.com/littlejo/terraform-kind-cilium-clustermesh
