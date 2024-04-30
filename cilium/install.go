@@ -8,10 +8,14 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/cilium/cilium-cli/connectivity/check"
 	"github.com/cilium/cilium-cli/defaults"
+	"github.com/cilium/cilium-cli/hubble"
 	"github.com/cilium/cilium-cli/install"
+	"github.com/cilium/cilium/pkg/inctimer"
+
 	"helm.sh/helm/v3/pkg/cli/values"
+	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -391,24 +395,48 @@ func (r *CiliumInstallResource) Delete(ctx context.Context, req resource.DeleteR
 	params.Namespace = namespace
 	params.HelmReleaseName = helm_release
 	params.TestNamespace = defaults.ConnectivityCheckNamespace
-	params.Wait = true
+	params.Wait = data.Wait.ValueBool()
+
 	params.Timeout = defaults.UninstallTimeout
 	ctxb := context.Background()
-	version := data.Version.ValueString()
 
-	cc, err := check.NewConnectivityTest(k8sClient, check.Parameters{
-		CiliumNamespace: namespace,
-		TestNamespace:   params.TestNamespace,
-		FlowValidation:  check.FlowValidationModeDisabled,
-		Writer:          os.Stdout,
-	}, version)
-	if err != nil {
-		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("⚠ ️ Failed to initialize connectivity test uninstaller: %s", err))
-		return
-	} else {
-		cc.UninstallResources(ctxb, params.Wait)
-	}
 	uninstaller := install.NewK8sUninstaller(k8sClient, params)
+	uninstaller.DeleteTestNamespace(ctxb)
+
+	var hubbleParams = hubble.Parameters{
+		Writer:          os.Stdout,
+		Wait:            true,
+		Namespace:       namespace,
+		HelmReleaseName: helm_release,
+	}
+
+	if params.Wait {
+		// Disable Hubble, then wait for Pods to terminate before uninstalling Cilium.
+		// This guarantees that relay Pods are terminated fully via Cilium (rather than
+		// being queued for deletion) before uninstalling Cilium.
+		fmt.Printf("⌛ Waiting to disable Hubble before uninstalling Cilium\n")
+		if err := hubble.DisableWithHelm(ctx, k8sClient, hubbleParams); err != nil {
+			fmt.Printf("⚠ ️ Failed to disable Hubble prior to uninstalling Cilium: %s\n", err)
+		}
+		for {
+			ps, err := k8sClient.ListPods(ctx, hubbleParams.Namespace, metav1.ListOptions{
+				LabelSelector: "k8s-app=hubble-relay",
+			})
+			if err != nil {
+				if k8sErrors.IsNotFound(err) {
+					break
+				}
+				resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to list pods waiting for hubble-relay to stop: %s", err))
+			}
+			if len(ps.Items) == 0 {
+				break
+			}
+			select {
+			case <-inctimer.After(defaults.WaitRetryInterval):
+			case <-ctx.Done():
+			}
+		}
+	}
 	if err := uninstaller.UninstallWithHelm(ctxb, k8sClient.HelmActionConfig); err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("⚠ ️ Unable to uninstall Cilium: %s", err))
 		return
