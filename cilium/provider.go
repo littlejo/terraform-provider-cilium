@@ -5,6 +5,7 @@ package provider
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	"os"
 
@@ -30,10 +31,11 @@ type CiliumProvider struct {
 
 // CiliumProviderModel describes the provider data model.
 type CiliumProviderModel struct {
-	Context     types.String `tfsdk:"context"`
-	ConfigPath  types.String `tfsdk:"config_path"`
-	Namespace   types.String `tfsdk:"namespace"`
-	HelmRelease types.String `tfsdk:"helm_release"`
+	Context       types.String `tfsdk:"context"`
+	ConfigPath    types.String `tfsdk:"config_path"`
+	ConfigContent types.String `tfsdk:"config_content"`
+	Namespace     types.String `tfsdk:"namespace"`
+	HelmRelease   types.String `tfsdk:"helm_release"`
 }
 
 func (p *CiliumProvider) Metadata(ctx context.Context, req provider.MetadataRequest, resp *provider.MetadataResponse) {
@@ -50,6 +52,10 @@ func (p *CiliumProvider) Schema(ctx context.Context, req provider.SchemaRequest,
 			},
 			"config_path": schema.StringAttribute{
 				MarkdownDescription: ConcatDefault("A path to a kube config file", "~/.kube/config"),
+				Optional:            true,
+			},
+			"config_content": schema.StringAttribute{
+				MarkdownDescription: ConcatDefault("The content of kube config file", ""),
 				Optional:            true,
 			},
 			"namespace": schema.StringAttribute{
@@ -77,15 +83,33 @@ func (p *CiliumProvider) Configure(ctx context.Context, req provider.ConfigureRe
 	config_path := data.ConfigPath.ValueString()
 	context := data.Context.ValueString()
 	helm_release := data.HelmRelease.ValueString()
+	config_content := data.ConfigContent.ValueString()
 
-	if config_path != "" {
-		os.Setenv("KUBECONFIG", config_path)
-	}
 	if helm_release == "" {
 		helm_release = "cilium"
 	}
 	if namespace == "" {
 		namespace = "kube-system"
+	}
+	if config_content != "" {
+		config_content_str, err := base64.StdEncoding.DecodeString(config_content)
+		if err != nil {
+			panic(err)
+		}
+		f, err := os.CreateTemp("", "kubeconfig")
+		if err != nil {
+			panic(err)
+		}
+		if _, err := f.Write(config_content_str); err != nil {
+			panic(err)
+		}
+		if err := f.Close(); err != nil {
+			panic(err)
+		}
+		config_path = f.Name()
+	}
+	if config_path != "" {
+		os.Setenv("KUBECONFIG", config_path)
 	}
 
 	client, err := k8s.NewClient(context, config_path, namespace)

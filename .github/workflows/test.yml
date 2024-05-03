@@ -230,3 +230,47 @@ jobs:
       - run: tofu destroy -auto-approve
         working-directory: .github/tf/cilium
       - run: kubectl get pod -n cilium
+
+  test-content-provider:
+    name: "Functionnal test: attribute config_content"
+    runs-on: ubuntu-latest
+    env:
+      dir: .github/tf/provider-config-content/
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        # list whatever tofu versions here you would like to support
+        tofu:
+          - '1.6.*'
+    steps:
+      - uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
+      - uses: actions/setup-go@cdcb36043654635271a94b9a6d1392de5bb323a7 # v5.0.1
+        with:
+          go-version-file: 'go.mod'
+          cache: true
+      - uses: opentofu/setup-opentofu@v1
+        with:
+          tofu_version: ${{ matrix.tofu }}
+          tofu_wrapper: true
+      - name: Setup kind test1
+        uses: helm/kind-action@0025e74a8c7512023d06dc019c617aa3cf561fde # v1.10.0
+        with:
+          wait: 0
+          config: .github/config/acceptance_tests_kind_config.yaml
+          cluster_name: "test1"
+      - run: make
+      - run: cp .github/tf/versions.tf $dir
+      - run: echo "config_content = \"$(cat ${HOME}/.kube/config | base64 -w 0)\"" > $dir/tofu.auto.tfvars
+      - run: cat $dir/tofu.auto.tfvars
+      - run: tofu init
+        working-directory: ${{ env.dir }}
+      - run: tofu plan
+        working-directory: ${{ env.dir }}
+      - run: ls 2>/dev/null -l /tmp/kubeconfig* | wc -l
+      - run: tofu apply -auto-approve
+        working-directory: ${{ env.dir }}
+      - run: ls 2>/dev/null -l /tmp/kubeconfig* | wc -l
+      - run: tofu destroy -auto-approve
+        working-directory: ${{ env.dir }}
+      - run: ls 2>/dev/null -l /tmp/kubeconfig* | wc -l
