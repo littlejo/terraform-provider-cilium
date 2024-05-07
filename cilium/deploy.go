@@ -54,7 +54,7 @@ type CiliumDeployResourceModel struct {
 	Reset      types.Bool   `tfsdk:"reset"`
 	Id         types.String `tfsdk:"id"`
 	HelmValues types.String `tfsdk:"helm_values"`
-	CA         types.Object `tfsdk:"ca"`
+	// CA         types.Object `tfsdk:"ca"`
 }
 
 func (r *CiliumDeployResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -67,11 +67,11 @@ func (r *CiliumDeployResource) Schema(ctx context.Context, req resource.SchemaRe
 		MarkdownDescription: "Install resource for Cilium. This is equivalent to cilium cli: `cilium install`, `cilium upgrade` and `cilium uninstall`: It manages cilium helm chart",
 
 		Attributes: map[string]schema.Attribute{
-			"ca": schema.ObjectAttribute{
-				AttributeTypes: CaAttributeTypes,
-				Computed:       true,
-				Sensitive:      true,
-			},
+			//"ca": schema.ObjectAttribute{
+			//	AttributeTypes: CaAttributeTypes,
+			//	Computed:       true,
+			//	Sensitive:      true,
+			//},
 			"set": schema.ListAttribute{
 				ElementType:         types.StringType,
 				MarkdownDescription: ConcatDefault("Set helm values on the command line (can specify multiple or separate values with commas: key1=val1,key2=val2", "[]"),
@@ -231,12 +231,12 @@ func (r *CiliumDeployResource) Create(ctx context.Context, req resource.CreateRe
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to install Cilium: %s", err))
 		return
 	}
-	ca, err := c.GetCA(ctx)
-	if err != nil {
-		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to retrieve cilium-ca: %s", err))
-		return
-	}
-	data.CA = types.ObjectValueMust(CaAttributeTypes, ca)
+	//ca, err := c.GetCA(ctx)
+	//if err != nil {
+	//	resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to retrieve cilium-ca: %s", err))
+	//	return
+	//}
+	//data.CA = types.ObjectValueMust(CaAttributeTypes, ca)
 	data.HelmValues = types.StringValue(helm_values)
 
 	// Write logs using the tflog package
@@ -277,12 +277,12 @@ func (r *CiliumDeployResource) Read(ctx context.Context, req resource.ReadReques
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read tfstate: %s", err))
 		return
 	}
-	ca, err := c.GetCA(ctx)
-	if err != nil {
-		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to retrieve cilium-ca: %s", err))
-		return
-	}
-	data.CA = types.ObjectValueMust(CaAttributeTypes, ca)
+	//ca, err := c.GetCA(ctx)
+	//if err != nil {
+	//	resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to retrieve cilium-ca: %s", err))
+	//	return
+	//}
+	//data.CA = types.ObjectValueMust(CaAttributeTypes, ca)
 	data.HelmValues = types.StringValue(helm_values)
 	data.Version = types.StringValue(version)
 
@@ -364,12 +364,12 @@ func (r *CiliumDeployResource) Update(ctx context.Context, req resource.UpdateRe
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to upgrade Cilium: %s", err))
 		return
 	}
-	ca, err := c.GetCA(ctx)
-	if err != nil {
-		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to retrieve cilium-ca: %s", err))
-		return
-	}
-	data.CA = types.ObjectValueMust(CaAttributeTypes, ca)
+	//ca, err := c.GetCA(ctx)
+	//if err != nil {
+	//	resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to retrieve cilium-ca: %s", err))
+	//	return
+	//}
+	//data.CA = types.ObjectValueMust(CaAttributeTypes, ca)
 	data.HelmValues = types.StringValue(helm_values)
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
