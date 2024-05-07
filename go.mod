@@ -4,7 +4,7 @@ go 1.22.2
 
 require (
 	github.com/cilium/cilium v1.16.0-pre.2
-	github.com/cilium/cilium-cli v0.16.6
+	github.com/cilium/cilium-cli v0.16.7
 	github.com/hashicorp/terraform-plugin-docs v0.19.2
 	github.com/hashicorp/terraform-plugin-framework v1.8.0
 	github.com/hashicorp/terraform-plugin-go v0.23.0
@@ -37,7 +37,7 @@ require (
 	github.com/bmatcuk/doublestar/v4 v4.6.1 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/chai2010/gettext-go v1.0.2 // indirect
-	github.com/cilium/charts v0.0.0-20240422153434-d93188bc52aa // indirect
+	github.com/cilium/charts v0.0.0-20240503000404-89896efdd729 // indirect
 	github.com/cilium/ebpf v0.15.0 // indirect
 	github.com/cilium/hive v0.0.0-20240425092031-f6d2f20c979b // indirect
 	github.com/cilium/proxy v0.0.0-20240418093727-2c7164c53e26 // indirect
