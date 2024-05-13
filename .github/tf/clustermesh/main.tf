@@ -3,14 +3,19 @@ locals {
   key  = cilium.this.ca["key"]
 }
 
+variable "config_content" {
+}
+
 provider "cilium" {
   alias   = "mesh1"
   context = "kind-test1"
+  config_content = var.config_content
 }
 
 provider "cilium" {
   alias   = "mesh2"
   context = "kind-test2"
+  config_content = var.config_content
 }
 
 resource "cilium" "this" {

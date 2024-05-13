@@ -150,6 +150,7 @@ jobs:
           config: .github/config/acceptance_tests_kind_config2.yaml
           cluster_name: "test2"
       - run: make
+      - run: echo "config_content = \"$(cat ${HOME}/.kube/config | base64 -w 0)\"" > .github/tf/clustermesh/tofu.auto.tfvars
       - run: cp .github/tf/versions.tf .github/tf/clustermesh
       - run: tofu init
         working-directory: .github/tf/clustermesh
