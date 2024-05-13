@@ -156,6 +156,8 @@ jobs:
         working-directory: .github/tf/clustermesh
       - run: tofu apply -auto-approve
         working-directory: .github/tf/clustermesh
+      - run: cilium status
+      - run: cilium clustermesh status
       - run: tofu destroy -auto-approve
         working-directory: .github/tf/clustermesh
 
