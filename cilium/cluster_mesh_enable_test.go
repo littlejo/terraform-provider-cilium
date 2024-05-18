@@ -38,13 +38,22 @@ func TestAccCiliumClusterMeshEnableResource(t *testing.T) {
 }
 
 func testAccCiliumClusterMeshEnableResourceConfig(service_type string) string {
-	return fmt.Sprintf(`
+	return fmt.Sprintf(ProviderConfig+`
 resource "cilium" "test" {
   version = "1.15.2"
 }
 resource "cilium_clustermesh" "test" {
   service_type = %[1]q
   depends_on   = [ cilium.test ]
+}
+resource "cilium" "test2" {
+  version = "1.15.2"
+  provider = cilium.test
+}
+resource "cilium_clustermesh" "test2" {
+  service_type = %[1]q
+  depends_on   = [ cilium.test2 ]
+  provider = cilium.test
 }
 `, service_type)
 }
