@@ -76,6 +76,13 @@ jobs:
         with:
           wait: 0
           config: .github/config/acceptance_tests_kind_config.yaml
+          cluster_name: "test"
+      - name: Setup kind test2
+        uses: helm/kind-action@0025e74a8c7512023d06dc019c617aa3cf561fde # v1.10.0
+        with:
+          wait: 0
+          config: .github/config/acceptance_tests_kind_config2.yaml
+          cluster_name: "test2"
       - run: go mod download
       - env:
           TF_ACC: "1"
