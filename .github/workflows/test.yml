@@ -187,6 +187,20 @@ jobs:
         working-directory: .github/tf/clustermesh
       - run: tofu apply -auto-approve
         working-directory: .github/tf/clustermesh
+      - uses: cilium/cilium-cli@4892ceb1abbc1f7d8bb5c7f9160ec56717c3c32c
+        with:
+          skip-build: true
+          release-version: v0.16.10
+      - name: Check Cluster Mesh
+        run: |
+          for i in $(seq 1 4)
+          do
+            echo "Cluster: kind-cmesh$i"
+            cilium status --context=kind-test$i --wait
+            cilium clustermesh status --context=kind-test$i --wait
+          done
+            echo "Cluster Connectivity test kind-cmesh1 and kind-cmesh2"
+          cilium connectivity test --context kind-test1 --multi-cluster kind-test2
       - run: tofu destroy -auto-approve
         working-directory: .github/tf/clustermesh
 
