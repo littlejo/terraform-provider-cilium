@@ -137,7 +137,7 @@ jobs:
         run: go test -v -cover ./cilium
         timeout-minutes: 10
 
-  test-cluster-mesh:
+  test-cluster-mesh-4:
     name: "Functionnal test: Clustermesh"
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -169,6 +169,18 @@ jobs:
           wait: 0
           config: .github/config/acceptance_tests_kind_config2.yaml
           cluster_name: "test2"
+      - name: Setup kind test3
+        uses: helm/kind-action@0025e74a8c7512023d06dc019c617aa3cf561fde # v1.10.0
+        with:
+          wait: 0
+          config: .github/config/acceptance_tests_kind_config3.yaml
+          cluster_name: "test3"
+      - name: Setup kind test4
+        uses: helm/kind-action@0025e74a8c7512023d06dc019c617aa3cf561fde # v1.10.0
+        with:
+          wait: 0
+          config: .github/config/acceptance_tests_kind_config4.yaml
+          cluster_name: "test4"
       - run: make
       - run: cp .github/tf/versions.tf .github/tf/clustermesh
       - run: tofu init

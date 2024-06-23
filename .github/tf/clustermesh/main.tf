@@ -13,6 +13,16 @@ provider "cilium" {
   context = "kind-test2"
 }
 
+provider "cilium" {
+  alias   = "mesh3"
+  context = "kind-test3"
+}
+
+provider "cilium" {
+  alias   = "mesh4"
+  context = "kind-test4"
+}
+
 resource "cilium" "this" {
   set = [
     "cluster.name=mesh1",
@@ -21,10 +31,6 @@ resource "cilium" "this" {
   ]
   version  = "1.15.2"
   provider = cilium.mesh1
-}
-
-output "cilium_ca1" {
-  value = nonsensitive(cilium.this.ca)
 }
 
 resource "cilium_clustermesh" "this" {
@@ -47,10 +53,6 @@ resource "cilium" "this2" {
   provider = cilium.mesh2
 }
 
-output "cilium_ca2" {
-  value = nonsensitive(cilium.this2.ca)
-}
-
 resource "cilium_clustermesh" "this2" {
   service_type = "NodePort"
   depends_on = [
@@ -59,11 +61,51 @@ resource "cilium_clustermesh" "this2" {
   provider = cilium.mesh2
 }
 
-resource "cilium_clustermesh_connection" "this" {
-  destination_context = "kind-test2"
-  provider            = cilium.mesh1
-  depends_on = [
-    cilium_clustermesh.this,
-    cilium_clustermesh.this2,
+resource "cilium" "this3" {
+  set = [
+    "cluster.name=mesh3",
+    "cluster.id=3",
+    "ipam.mode=kubernetes",
+    "tls.ca.cert=${local.cert}",
+    "tls.ca.key=${local.key}",
   ]
+  version  = "1.15.2"
+  provider = cilium.mesh3
 }
+
+resource "cilium_clustermesh" "this3" {
+  service_type = "NodePort"
+  depends_on = [
+    cilium.this3
+  ]
+  provider = cilium.mesh3
+}
+
+resource "cilium" "this4" {
+  set = [
+    "cluster.name=mesh4",
+    "cluster.id=4",
+    "ipam.mode=kubernetes",
+    "tls.ca.cert=${local.cert}",
+    "tls.ca.key=${local.key}",
+  ]
+  version  = "1.15.2"
+  provider = cilium.mesh4
+}
+
+resource "cilium_clustermesh" "this4" {
+  service_type = "NodePort"
+  depends_on = [
+    cilium.this4
+  ]
+  provider = cilium.mesh4
+}
+
+#resource "cilium_clustermesh_connection" "this" {
+#  destination_context = "kind-test2"
+#  provider            = cilium.mesh1
+#  depends_on = [
+#    cilium_clustermesh.this,
+#    cilium_clustermesh.this2,
+#  ]
+#}
