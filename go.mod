@@ -4,7 +4,7 @@ go 1.22.2
 
 require (
 	github.com/cilium/cilium v1.16.0-rc.0
-	github.com/cilium/cilium-cli v0.16.10
+	github.com/cilium/cilium-cli v0.16.11
 	github.com/hashicorp/terraform-plugin-docs v0.19.4
 	github.com/hashicorp/terraform-plugin-framework v1.9.0
 	github.com/hashicorp/terraform-plugin-go v0.23.0
@@ -37,7 +37,7 @@ require (
 	github.com/bmatcuk/doublestar/v4 v4.6.1 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/chai2010/gettext-go v1.0.2 // indirect
-	github.com/cilium/charts v0.0.0-20240603232239-65507c1d60bc // indirect
+	github.com/cilium/charts v0.0.0-20240617195019-6931c75d0f5f // indirect
 	github.com/cilium/ebpf v0.15.0 // indirect
 	github.com/cilium/hive v0.0.0-20240529072208-d997f86e4219 // indirect
 	github.com/cilium/proxy v0.0.0-20240418093727-2c7164c53e26 // indirect
@@ -158,7 +158,7 @@ require (
 	github.com/posener/complete v1.2.3 // indirect
 	github.com/prometheus/client_golang v1.19.1 // indirect
 	github.com/prometheus/client_model v0.6.1 // indirect
-	github.com/prometheus/common v0.54.0 // indirect
+	github.com/prometheus/common v0.55.0 // indirect
 	github.com/prometheus/procfs v0.15.1 // indirect
 	github.com/rivo/uniseg v0.4.4 // indirect
 	github.com/rogpeppe/go-internal v1.12.0 // indirect
@@ -202,7 +202,7 @@ require (
 	golang.org/x/exp v0.0.0-20240613232115-7f521ea00fb8 // indirect
 	golang.org/x/mod v0.18.0 // indirect
 	golang.org/x/net v0.26.0 // indirect
-	golang.org/x/oauth2 v0.19.0 // indirect
+	golang.org/x/oauth2 v0.21.0 // indirect
 	golang.org/x/sync v0.7.0 // indirect
 	golang.org/x/sys v0.21.0 // indirect
 	golang.org/x/term v0.21.0 // indirect
