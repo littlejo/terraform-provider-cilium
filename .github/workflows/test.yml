@@ -99,7 +99,9 @@ jobs:
       - run: go mod download
       - env:
           TF_ACC: "1"
-        run: go test -v -cover ./cilium
+          TF_ACC_PROVIDER_NAMESPACE: "hashicorp"
+          TF_ACC_PROVIDER_HOST: "registry.opentofu.org"
+        run: TF_ACC_TERRAFORM_PATH=$(which tofu) go test -v -cover ./cilium
         timeout-minutes: 10
 
   test:
