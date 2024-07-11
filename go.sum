@@ -71,6 +71,8 @@ github.com/census-instrumentation/opencensus-proto v0.4.1 h1:iKLQ0xPNFxR/2hzXZMr
 github.com/census-instrumentation/opencensus-proto v0.4.1/go.mod h1:4T9NM4+4Vw91VeyqjLS6ao50K5bOcLKN6Q42XnYaRYw=
 github.com/cespare/xxhash/v2 v2.2.0 h1:DC2CZ1Ep5Y4k3ZQ899DldepgrayRUGE6BBZ/cd9Cj44=
 github.com/cespare/xxhash/v2 v2.2.0/go.mod h1:VGX0DQ3Q6kWi7AoAeZDth3/j3BFtOZR5XLFGgcrjCOs=
+github.com/cespare/xxhash/v2 v2.3.0 h1:UL815xU9SqsFlibzuggzjXhog7bL6oX9BbNZnL2UFvs=
+github.com/cespare/xxhash/v2 v2.3.0/go.mod h1:VGX0DQ3Q6kWi7AoAeZDth3/j3BFtOZR5XLFGgcrjCOs=
 github.com/chai2010/gettext-go v1.0.2 h1:1Lwwip6Q2QGsAdl/ZKPCwTe9fe0CjlUbqj5bFNSjIRk=
 github.com/chai2010/gettext-go v1.0.2/go.mod h1:y+wnP2cHYaVj19NZhYKAwEMH2CI1gNHeQQ+5AjwawxA=
 github.com/chzyer/logex v1.1.10/go.mod h1:+Ywpsq7O8HXn0nuIou7OrIPyXbp3wmkHB+jjWRnGsAI=
@@ -80,6 +82,8 @@ github.com/cilium/charts v0.0.0-20240603232239-65507c1d60bc h1:Jg4ZO1WxRfL6ZXzEB
 github.com/cilium/charts v0.0.0-20240603232239-65507c1d60bc/go.mod h1:M3C9VOlFvRzuV+a01t07Tw4uFLSfkCH3L542IWjf6BU=
 github.com/cilium/charts v0.0.0-20240617195019-6931c75d0f5f h1:wRmP5NvHpRgN/QJO0T/RXvJO1nqC/zK6BLJnT0iR7Bs=
 github.com/cilium/charts v0.0.0-20240617195019-6931c75d0f5f/go.mod h1:M3C9VOlFvRzuV+a01t07Tw4uFLSfkCH3L542IWjf6BU=
+github.com/cilium/charts v0.0.0-20240628222741-d0ce83a2f483 h1:K+WJPPzdxg0xTyVVuR1oyrgdsqF3j3wVyQCkDWYtlfc=
+github.com/cilium/charts v0.0.0-20240628222741-d0ce83a2f483/go.mod h1:M3C9VOlFvRzuV+a01t07Tw4uFLSfkCH3L542IWjf6BU=
 github.com/cilium/cilium v1.16.0-pre.3 h1:fI4S5fWenqqaGNHlDcaZ6BGCs7+LKQg1YD1e3Py4Lds=
 github.com/cilium/cilium v1.16.0-pre.3/go.mod h1:cj+4oNX096CcuLO1XMK4nqF7BVN97yPCDvUlmI5g90s=
 github.com/cilium/cilium v1.16.0-rc.0 h1:g19C/fEZ5MXVikEOE8gvPNOki4unGlIXXFz27bJAvWY=
@@ -90,6 +94,8 @@ github.com/cilium/cilium-cli v0.16.10 h1:VFZKjTV/mrEfZkV93VpTXy1903pcWjNX3r4BTrZ
 github.com/cilium/cilium-cli v0.16.10/go.mod h1:vj6PAUnoieMAvXvmevGB86dVYpio6jEBMSXhQdenPcA=
 github.com/cilium/cilium-cli v0.16.11 h1:k7u4JXrpo6db965+mMPjhaEexTmM5AiFPsFErf4CGZE=
 github.com/cilium/cilium-cli v0.16.11/go.mod h1:hADoyhC7XRwxskx7/VP/sYhPYlYVwS0V6hvpJFBTn5I=
+github.com/cilium/cilium-cli v0.16.12 h1:Arm9EAoXS63m19y/g0Z1yA+7BofdhY1qai5PnTEO+uE=
+github.com/cilium/cilium-cli v0.16.12/go.mod h1:mIl7sKNcg+u1fgEdzJF6cNwMywnoX9cmQn1lKxRB2Hc=
 github.com/cilium/ebpf v0.15.0 h1:7NxJhNiBT3NG8pZJ3c+yfrVdHY8ScgKD27sScgjLMMk=
 github.com/cilium/ebpf v0.15.0/go.mod h1:DHp1WyrLeiBh19Cf/tfiSMhqheEiK8fXFZ4No0P1Hso=
 github.com/cilium/hive v0.0.0-20240529072208-d997f86e4219 h1:iX4v9lg63iTv8x8MWUMVbeWqtAGcV6yh/w3Zp9sP3ME=
@@ -791,6 +797,8 @@ google.golang.org/grpc v1.23.0/go.mod h1:Y5yQAOtifL1yxbo5wqy6BxZv8vAUGQwXBOALyac
 google.golang.org/grpc v1.27.0/go.mod h1:qbnxyOmOxrQa7FizSgH+ReBfzJrCY1pSN7KXBS8abTk=
 google.golang.org/grpc v1.64.0 h1:KH3VH9y/MgNQg1dE7b3XfVK0GsPSIzJwdF617gUSbvY=
 google.golang.org/grpc v1.64.0/go.mod h1:oxjF8E3FBnjp+/gVFYdWacaLDx9na1aqy9oovLpxQYg=
+google.golang.org/grpc v1.65.0 h1:bs/cUb4lp1G5iImFFd3u5ixQzweKizoZJAwBNLR42lc=
+google.golang.org/grpc v1.65.0/go.mod h1:WgYC2ypjlB0EiQi6wdKixMqukr6lBc0Vo+oOgjrM5ZQ=
 google.golang.org/protobuf v0.0.0-20200109180630-ec00e32a8dfd/go.mod h1:DFci5gLYBciE7Vtevhsrf46CRTquxDuWsQurQQe4oz8=
 google.golang.org/protobuf v0.0.0-20200221191635-4d8936d0db64/go.mod h1:kwYJMbMJ01Woi6D6+Kah6886xMZcty6N08ah7+eCXa0=
 google.golang.org/protobuf v0.0.0-20200228230310-ab0ca4ff8a60/go.mod h1:cfTl7dwQJ+fmap5saPgwCLgHXTUD7jkjRqWcaiX5VyM=
