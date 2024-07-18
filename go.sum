@@ -98,6 +98,8 @@ github.com/cilium/cilium-cli v0.16.11 h1:k7u4JXrpo6db965+mMPjhaEexTmM5AiFPsFErf4
 github.com/cilium/cilium-cli v0.16.11/go.mod h1:hADoyhC7XRwxskx7/VP/sYhPYlYVwS0V6hvpJFBTn5I=
 github.com/cilium/cilium-cli v0.16.12 h1:Arm9EAoXS63m19y/g0Z1yA+7BofdhY1qai5PnTEO+uE=
 github.com/cilium/cilium-cli v0.16.12/go.mod h1:mIl7sKNcg+u1fgEdzJF6cNwMywnoX9cmQn1lKxRB2Hc=
+github.com/cilium/cilium-cli v0.16.13 h1:oBrGCR7m/4EAUejweODPVsYLphTzeIrRke5z0k82hWk=
+github.com/cilium/cilium-cli v0.16.13/go.mod h1:h0Gbdx04kYEPONLWo8BRSv2IcveI4BvJ5Xzy5YfJY34=
 github.com/cilium/ebpf v0.15.0 h1:7NxJhNiBT3NG8pZJ3c+yfrVdHY8ScgKD27sScgjLMMk=
 github.com/cilium/ebpf v0.15.0/go.mod h1:DHp1WyrLeiBh19Cf/tfiSMhqheEiK8fXFZ4No0P1Hso=
 github.com/cilium/hive v0.0.0-20240529072208-d997f86e4219 h1:iX4v9lg63iTv8x8MWUMVbeWqtAGcV6yh/w3Zp9sP3ME=
