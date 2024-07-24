@@ -3,7 +3,7 @@ module github.com/littlejo/terraform-provider-cilium
 go 1.22.2
 
 require (
-	github.com/cilium/cilium v1.16.0-rc.2
+	github.com/cilium/cilium v1.16.0
 	github.com/cilium/cilium-cli v0.16.13
 	github.com/hashicorp/terraform-plugin-docs v0.19.4
 	github.com/hashicorp/terraform-plugin-framework v1.10.0

@@ -92,6 +92,8 @@ github.com/cilium/cilium v1.16.0-rc.1 h1:OxK4SD3jyEQcjSNrNMeADQQ1sb0gO0hy+eXO+8w
 github.com/cilium/cilium v1.16.0-rc.1/go.mod h1:u/Hggj4kmmYtLvZ+wG2nppabk7wpAFn09Sm+Bo1kGvo=
 github.com/cilium/cilium v1.16.0-rc.2 h1:XLF4jebCI0/joV1Ma1+cdiGaokFB0VYLsEgS165I+W4=
 github.com/cilium/cilium v1.16.0-rc.2/go.mod h1:u/Hggj4kmmYtLvZ+wG2nppabk7wpAFn09Sm+Bo1kGvo=
+github.com/cilium/cilium v1.16.0 h1:5NqA2H/7si4KbiMjzqeH130LTox7F2MrKSrS3lUYUTk=
+github.com/cilium/cilium v1.16.0/go.mod h1:u/Hggj4kmmYtLvZ+wG2nppabk7wpAFn09Sm+Bo1kGvo=
 github.com/cilium/cilium-cli v0.16.10 h1:VFZKjTV/mrEfZkV93VpTXy1903pcWjNX3r4BTrZpIKg=
 github.com/cilium/cilium-cli v0.16.10/go.mod h1:vj6PAUnoieMAvXvmevGB86dVYpio6jEBMSXhQdenPcA=
 github.com/cilium/cilium-cli v0.16.11 h1:k7u4JXrpo6db965+mMPjhaEexTmM5AiFPsFErf4CGZE=
