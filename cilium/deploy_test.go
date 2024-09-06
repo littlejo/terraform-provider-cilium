@@ -17,9 +17,9 @@ func TestAccCiliumDeployResource(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Create and Read testing
 			{
-				Config: testAccCiliumDeployResourceConfig("1.15.3"),
+				Config: testAccCiliumDeployResourceConfig("1.15.7"),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("cilium_deploy.test", "version", "1.15.3"),
+					resource.TestCheckResourceAttr("cilium_deploy.test", "version", "1.15.7"),
 					resource.TestCheckResourceAttr("cilium_deploy.test", "id", "cilium"),
 				),
 			},
@@ -32,9 +32,9 @@ func TestAccCiliumDeployResource(t *testing.T) {
 			},
 			// Update and Read testing
 			{
-				Config: testAccCiliumDeployResourceConfig("1.15.4"),
+				Config: testAccCiliumDeployResourceConfig("1.15.8"),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("cilium_deploy.test", "version", "1.15.4"),
+					resource.TestCheckResourceAttr("cilium_deploy.test", "version", "1.15.8"),
 					resource.TestCheckResourceAttr("cilium_deploy.test", "id", "cilium"),
 				),
 			},

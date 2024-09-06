@@ -19,7 +19,7 @@ resource "cilium" "this" {
     "cluster.id=1",
     "ipam.mode=kubernetes",
   ]
-  version  = "1.15.2"
+  version  = "1.16.1"
   provider = cilium.mesh1
 }
 
@@ -43,7 +43,7 @@ resource "cilium" "this2" {
     "tls.ca.cert=${local.cert}",
     "tls.ca.key=${local.key}",
   ]
-  version  = "1.15.2"
+  version  = "1.16.1"
   provider = cilium.mesh2
 }
 

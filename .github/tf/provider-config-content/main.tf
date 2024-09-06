@@ -6,5 +6,5 @@ provider "cilium" {
 }
 
 resource "cilium" "this" {
-  version  = "1.15.3"
+  version  = "1.16.1"
 }
