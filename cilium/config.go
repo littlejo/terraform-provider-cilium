@@ -10,7 +10,7 @@ import (
 	"os"
 	"regexp"
 
-	"github.com/cilium/cilium-cli/config"
+	"github.com/cilium/cilium/cilium-cli/config"
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"

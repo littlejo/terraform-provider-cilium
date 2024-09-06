@@ -8,9 +8,9 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/cilium/cilium-cli/defaults"
-	"github.com/cilium/cilium-cli/hubble"
-	"github.com/cilium/cilium-cli/install"
+	"github.com/cilium/cilium/cilium-cli/defaults"
+	"github.com/cilium/cilium/cilium-cli/hubble"
+	"github.com/cilium/cilium/cilium-cli/install"
 	"github.com/cilium/cilium/pkg/inctimer"
 
 	"helm.sh/helm/v3/pkg/cli/values"

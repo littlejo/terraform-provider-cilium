@@ -9,7 +9,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/cilium/cilium-cli/clustermesh"
+	"github.com/cilium/cilium/cilium-cli/clustermesh"
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
