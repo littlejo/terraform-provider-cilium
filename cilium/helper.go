@@ -9,10 +9,10 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/cilium/cilium-cli/clustermesh"
-	"github.com/cilium/cilium-cli/defaults"
-	"github.com/cilium/cilium-cli/k8s"
-	"github.com/cilium/cilium-cli/status"
+	"github.com/cilium/cilium/cilium-cli/clustermesh"
+	"github.com/cilium/cilium/cilium-cli/defaults"
+	"github.com/cilium/cilium/cilium-cli/k8s"
+	"github.com/cilium/cilium/cilium-cli/status"
 
 	"gopkg.in/yaml.v3"
 	"helm.sh/helm/v3/pkg/action"

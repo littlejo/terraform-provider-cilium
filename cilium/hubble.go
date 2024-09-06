@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/cilium/cilium-cli/hubble"
+	"github.com/cilium/cilium/cilium-cli/hubble"
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
