@@ -9,7 +9,7 @@ provider "cilium" {
 }
 
 resource "cilium" "this" {
-  version  = "1.15.2"
+  version  = "1.16.0"
   set = [
     "hubble.relay.enabled=true",
     "hubble.ui.enabled=true",
@@ -17,7 +17,7 @@ resource "cilium" "this" {
 }
 
 resource "cilium" "preflight" {
-  version  = "1.15.3"
+  version  = "1.16.1"
   set = [
     "preflight.enabled=true",
     "agent=false",
