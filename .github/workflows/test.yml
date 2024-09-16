@@ -173,7 +173,7 @@ jobs:
           config: .github/config/acceptance_tests_kind_config2.yaml
           cluster_name: "test2"
       - run: make
-      - run: cp .github/tf/versions.tf .github/tf/clustermesh
+      - run: cp .github/tf/versions.tf.local .github/tf/clustermesh/versions.tf
       - run: tofu init
         working-directory: .github/tf/clustermesh
       - run: tofu apply -auto-approve
@@ -208,7 +208,7 @@ jobs:
           config: .github/config/acceptance_tests_kind_config.yaml
           cluster_name: "test1"
       - run: make
-      - run: cp .github/tf/versions.tf .github/tf/kubeproxy-free
+      - run: cp .github/tf/versions.tf.local .github/tf/kubeproxy-free/versions.tf
       - run: tofu init
         working-directory: .github/tf/kubeproxy-free
       - run: tofu apply -auto-approve
@@ -244,7 +244,7 @@ jobs:
           config: .github/config/acceptance_tests_kind_config.yaml
           cluster_name: "test1"
       - run: make
-      - run: cp .github/tf/versions.tf .github/tf/cilium/
+      - run: cp .github/tf/versions.tf.local .github/tf/cilium/versions.tf
       - run: kubectl create namespace cilium
       - run: tofu init
         working-directory: .github/tf/cilium
@@ -284,7 +284,7 @@ jobs:
           config: .github/config/acceptance_tests_kind_config.yaml
           cluster_name: "test1"
       - run: make
-      - run: cp .github/tf/versions.tf $dir
+      - run: cp .github/tf/versions.tf.local $dir/version.tf
       - run: echo "config_content = \"$(cat ${HOME}/.kube/config | base64 -w 0)\"" > $dir/tofu.auto.tfvars
       - run: cat $dir/tofu.auto.tfvars
       - run: tofu init

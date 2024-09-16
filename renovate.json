@@ -3,8 +3,9 @@
   "extends": [
     "config:base"
   ],
-  "regexManagers": [
+  "customManagers": [
     {
+      "customType": "regex",
       "fileMatch": ["^.*\\.tf$"],
       "matchStrings": [
         "version\\s*=\\s*\"(?<currentValue>\\d+\\.\\d+\\.\\d+)\""
