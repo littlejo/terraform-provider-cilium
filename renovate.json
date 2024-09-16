@@ -3,9 +3,6 @@
   "extends": [
     "config:base"
   ],
-  "ignorePaths": [
-    "**/.github/tf/versions.tf"
-  ],
   "regexManagers": [
     {
       "fileMatch": ["^.*\\.tf$"],
