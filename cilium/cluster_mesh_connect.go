@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/cilium/cilium/cilium-cli/clustermesh"
@@ -14,6 +15,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
@@ -38,8 +40,9 @@ type CiliumClusterMeshConnectResource struct {
 type CiliumClusterMeshConnectResourceModel struct {
 	//SourceEndpoints      types.List `tfsdk:"source_endpoint"`
 	//DestinationEndpoints types.List `tfsdk:"destination_endpoint"`
-	DestinationContext types.String `tfsdk:"destination_context"`
-	Id                 types.String `tfsdk:"id"`
+	DestinationContexts types.List   `tfsdk:"destination_contexts"`
+	ConnectionMode      types.String `tfsdk:"connection_mode"`
+	Id                  types.String `tfsdk:"id"`
 }
 
 func (r *CiliumClusterMeshConnectResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -52,11 +55,18 @@ func (r *CiliumClusterMeshConnectResource) Schema(ctx context.Context, req resou
 		MarkdownDescription: "Cluster Mesh connection resource. This is equivalent to cilium cli: `cilium clustermesh connect` and `cilium clustermesh disconnect`: It manages the connections between two Kubernetes clusters.",
 
 		Attributes: map[string]schema.Attribute{
-			"destination_context": schema.StringAttribute{
-				MarkdownDescription: "Kubernetes configuration context of destination cluster",
+			"destination_contexts": schema.ListAttribute{
+				ElementType:         types.StringType,
+				MarkdownDescription: "Kubernetes configuration contexts of destination clusters",
 				Optional:            true,
 				Computed:            true,
-				Default:             stringdefault.StaticString(""),
+				Default:             listdefault.StaticValue(types.ListNull(types.StringType)),
+			},
+			"connection_mode": schema.StringAttribute{
+				MarkdownDescription: ConcatDefault("Connection mode. unicast, bidirectional and mesh", "bidirectional"),
+				Optional:            true,
+				Computed:            true,
+				Default:             stringdefault.StaticString("bidirectional"),
 			},
 			//"destination_endpoint": schema.ListAttribute{
 			//	ElementType:         types.StringType,
@@ -121,8 +131,10 @@ func (r *CiliumClusterMeshConnectResource) Create(ctx context.Context, req resou
 		return
 	}
 	params.Namespace = namespace
-	params.DestinationContext = data.DestinationContext.ValueString()
 	params.HelmReleaseName = helm_release
+
+	params.DestinationContext = ValueList(ctx, data.DestinationContexts)
+	params.ConnectionMode = data.ConnectionMode.ValueString()
 
 	cm := clustermesh.NewK8sClusterMesh(k8sClient, params)
 	if err := cm.ConnectWithHelm(context.Background()); err != nil {
@@ -132,7 +144,7 @@ func (r *CiliumClusterMeshConnectResource) Create(ctx context.Context, req resou
 
 	// For the purposes of this example code, hardcoding a response value to
 	// save into the Terraform state.
-	data.Id = types.StringValue("ciliumclustermeshconnect-" + params.DestinationContext)
+	data.Id = types.StringValue("ciliumclustermeshconnect-" + strings.Join(params.DestinationContext, "-"))
 
 	// Write logs using the tflog package
 	// Documentation: https://terraform.io/plugin/log
@@ -195,7 +207,8 @@ func (r *CiliumClusterMeshConnectResource) Update(ctx context.Context, req resou
 		return
 	}
 	params.Namespace = namespace
-	params.DestinationContext = data.DestinationContext.ValueString()
+	params.DestinationContext = ValueList(ctx, data.DestinationContexts)
+	params.ConnectionMode = data.ConnectionMode.ValueString()
 	params.HelmReleaseName = helm_release
 
 	cm := clustermesh.NewK8sClusterMesh(k8sClient, params)
@@ -229,6 +242,7 @@ func (r *CiliumClusterMeshConnectResource) Delete(ctx context.Context, req resou
 
 	params.Namespace = namespace
 	params.HelmReleaseName = helm_release
+	params.ConnectionMode = data.ConnectionMode.ValueString()
 
 	cm := clustermesh.NewK8sClusterMesh(k8sClient, params)
 	if err := cm.DisconnectWithHelm(context.Background()); err != nil {

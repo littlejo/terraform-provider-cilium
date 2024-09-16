@@ -178,15 +178,7 @@ func (r *CiliumDeployResource) Create(ctx context.Context, req resource.CreateRe
 	params.HelmReleaseName = helm_release
 	wait := data.Wait.ValueBool()
 
-	helmSet := make([]types.String, 0, len(data.HelmSet.Elements()))
-	data.HelmSet.ElementsAs(ctx, &helmSet, false)
-
-	h := []string{}
-	for _, e := range helmSet {
-		h = append(h, e.ValueString())
-	}
-
-	options.Values = h
+	options.Values = ValueList(ctx, data.HelmSet)
 
 	values := data.Values.ValueString()
 
@@ -314,15 +306,8 @@ func (r *CiliumDeployResource) Update(ctx context.Context, req resource.UpdateRe
 	params.HelmResetValues = data.Reset.ValueBool()
 	params.HelmReuseValues = data.Reuse.ValueBool()
 	wait := data.Wait.ValueBool()
-	helmSet := make([]types.String, 0, len(data.HelmSet.Elements()))
-	data.HelmSet.ElementsAs(ctx, &helmSet, false)
 
-	h := []string{}
-	for _, e := range helmSet {
-		h = append(h, e.ValueString())
-	}
-
-	options.Values = h
+	options.Values = ValueList(ctx, data.HelmSet)
 
 	values := data.Values.ValueString()
 

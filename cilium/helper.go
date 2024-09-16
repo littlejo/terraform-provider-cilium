@@ -156,3 +156,14 @@ func (c *CiliumClient) CheckDaemonsetAvailability(ctx context.Context, namespace
 
 	return nil
 }
+
+func ValueList(ctx context.Context, l types.List) []string {
+	destinationContexts := make([]types.String, 0, len(l.Elements()))
+	l.ElementsAs(ctx, &destinationContexts, false)
+
+	d := []string{}
+	for _, e := range destinationContexts {
+		d = append(d, e.ValueString())
+	}
+	return d
+}
