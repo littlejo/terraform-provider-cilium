@@ -3,14 +3,19 @@
   "extends": [
     "config:base"
   ],
-  "packageRules": [
+  "ignorePaths": [
+    ".github/tf/versions.tf"
+  ],
+  "regexManagers": [
     {
-      "managers": ["terraform"],
-      "matchPackageNames": ["cilium"],
-      "registryUrls": [
-        "https://github.com/cilium/cilium"
+      "fileMatch": ["^.*\\.tf$"],
+      "matchStrings": [
+        "version\\s*=\\s*\"(?<currentValue>\\d+\\.\\d+\\.\\d+)\""
       ],
-      "versioning": "semver"
+      "depNameTemplate": "cilium",
+      "datasourceTemplate": "github-tags",
+      "packageNameTemplate": "cilium/cilium",
+      "versioningTemplate": "semver"
     }
   ]
 }
