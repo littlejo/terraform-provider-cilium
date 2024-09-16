@@ -4,7 +4,7 @@
     "config:base"
   ],
   "ignorePaths": [
-    ".github/tf/versions.tf"
+    "**/.github/tf/versions.tf"
   ],
   "regexManagers": [
     {
