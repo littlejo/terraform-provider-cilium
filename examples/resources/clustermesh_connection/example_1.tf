@@ -1,5 +1,5 @@
 resource "cilium_clustermesh_connection" "example" {
-  destination_context = "context-2"
+  destination_contexts = ["context-2"]
 }
 
 provider "cilium" {
