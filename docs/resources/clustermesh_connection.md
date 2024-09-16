@@ -14,7 +14,7 @@ Cluster Mesh connection resource. This is equivalent to cilium cli: `cilium clus
 
 ```terraform
 resource "cilium_clustermesh_connection" "example" {
-  destination_context = "context-2"
+  destination_contexts = ["context-2"]
 }
 
 provider "cilium" {
@@ -33,7 +33,8 @@ provider "cilium" {
 
 ### Optional
 
-- `destination_context` (String) Kubernetes configuration context of destination cluster
+- `destination_contexts` (List of String) Kubernetes configuration contexts of destination clusters
+- `connection_mode` (String) Connection Mode { `unicast` | `bidirectional` | `mesh` } (Default: `bidirectional`).
 
 ### Read-Only
 
