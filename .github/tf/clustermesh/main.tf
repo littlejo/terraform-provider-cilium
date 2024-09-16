@@ -60,8 +60,8 @@ resource "cilium_clustermesh" "this2" {
 }
 
 resource "cilium_clustermesh_connection" "this" {
-  destination_context = "kind-test2"
-  provider            = cilium.mesh1
+  destination_contexts = ["kind-test2"]
+  provider             = cilium.mesh1
   depends_on = [
     cilium_clustermesh.this,
     cilium_clustermesh.this2,
