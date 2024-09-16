@@ -6,7 +6,7 @@
   "customManagers": [
     {
       "customType": "regex",
-      "fileMatch": ["^.*\\.tf$"],
+      "fileMatch": [".github/tf/cilium/main.tf"],
       "matchStrings": [
         "version\\s*=\\s*\"(?<currentValue>\\d+\\.\\d+\\.\\d+)\""
       ],
