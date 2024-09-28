@@ -35,6 +35,7 @@ provider "cilium" {
 
 - `destination_contexts` (List of String) Kubernetes configuration contexts of destination clusters
 - `connection_mode` (String) Connection Mode { `unicast` | `bidirectional` | `mesh` } (Default: `bidirectional`).
+- `parallel` (Number) Number of parallel connections of destination clusters (Default: `1`).
 
 ### Read-Only
 
