@@ -13,7 +13,7 @@ require (
 	github.com/hashicorp/terraform-plugin-testing v1.10.0
 	gopkg.in/yaml.v3 v3.0.1
 	helm.sh/helm/v3 v3.16.2
-	k8s.io/apimachinery v0.31.1
+	k8s.io/apimachinery v0.31.2
 )
 
 require (
