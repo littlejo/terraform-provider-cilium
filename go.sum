@@ -393,6 +393,8 @@ github.com/hashicorp/terraform-plugin-framework v1.12.0 h1:7HKaueHPaikX5/7cbC1r9
 github.com/hashicorp/terraform-plugin-framework v1.12.0/go.mod h1:N/IOQ2uYjW60Jp39Cp3mw7I/OpC/GfZ0385R0YibmkE=
 github.com/hashicorp/terraform-plugin-framework v1.13.0 h1:8OTG4+oZUfKgnfTdPTJwZ532Bh2BobF4H+yBiYJ/scw=
 github.com/hashicorp/terraform-plugin-framework v1.13.0/go.mod h1:j64rwMGpgM3NYXTKuxrCnyubQb/4VKldEKlcG8cvmjU=
+github.com/hashicorp/terraform-plugin-framework v1.14.1 h1:jaT1yvU/kEKEsxnbrn4ZHlgcxyIfjvZ41BLdlLk52fY=
+github.com/hashicorp/terraform-plugin-framework v1.14.1/go.mod h1:xNUKmvTs6ldbwTuId5euAtg37dTxuyj3LHS3uj7BHQ4=
 github.com/hashicorp/terraform-plugin-go v0.23.0 h1:AALVuU1gD1kPb48aPQUjug9Ir/125t+AAurhqphJ2Co=
 github.com/hashicorp/terraform-plugin-go v0.23.0/go.mod h1:1E3Cr9h2vMlahWMbsSEcNrOCxovCZhOOIXjFHbjc/lQ=
 github.com/hashicorp/terraform-plugin-go v0.24.0 h1:2WpHhginCdVhFIrWHxDEg6RBn3YaWzR2o6qUeIEat2U=
