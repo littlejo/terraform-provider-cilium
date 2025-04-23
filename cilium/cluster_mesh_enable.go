@@ -37,11 +37,10 @@ type CiliumClusterMeshEnableResource struct {
 
 // CiliumClusterMeshEnableResourceModel describes the resource data model.
 type CiliumClusterMeshEnableResourceModel struct {
-	EnableExternalWorkloads types.Bool   `tfsdk:"enable_external_workloads"`
-	EnableKVStoreMesh       types.Bool   `tfsdk:"enable_kv_store_mesh"`
-	ServiceType             types.String `tfsdk:"service_type"`
-	Wait                    types.Bool   `tfsdk:"wait"`
-	Id                      types.String `tfsdk:"id"`
+	EnableKVStoreMesh types.Bool   `tfsdk:"enable_kv_store_mesh"`
+	ServiceType       types.String `tfsdk:"service_type"`
+	Wait              types.Bool   `tfsdk:"wait"`
+	Id                types.String `tfsdk:"id"`
 }
 
 func (r *CiliumClusterMeshEnableResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -54,12 +53,6 @@ func (r *CiliumClusterMeshEnableResource) Schema(ctx context.Context, req resour
 		MarkdownDescription: "Cluster Mesh resource. This is equivalent to cilium cli: `cilium clustermesh enable` and `cilium clustermesh disable`: It manages the activation of Cluster Mesh on one Kubernetes cluster.",
 
 		Attributes: map[string]schema.Attribute{
-			"enable_external_workloads": schema.BoolAttribute{
-				MarkdownDescription: ConcatDefault("Enable support for external workloads, such as VMs", "false"),
-				Optional:            true,
-				Computed:            true,
-				Default:             booldefault.StaticBool(false),
-			},
 			"enable_kv_store_mesh": schema.BoolAttribute{
 				MarkdownDescription: ConcatDefault("Enable kvstoremesh, an extension which caches remote cluster information in the local kvstore (Cilium >=1.14 only)", "false"),
 				Optional:            true,
@@ -130,7 +123,6 @@ func (r *CiliumClusterMeshEnableResource) Create(ctx context.Context, req resour
 	params.Namespace = namespace
 	params.ServiceType = data.ServiceType.ValueString()
 	params.EnableKVStoreMesh = data.EnableKVStoreMesh.ValueBool() //
-	params.EnableExternalWorkloads = data.EnableExternalWorkloads.ValueBool()
 	params.HelmReleaseName = helm_release
 	wait := data.Wait.ValueBool()
 
@@ -215,7 +207,6 @@ func (r *CiliumClusterMeshEnableResource) Update(ctx context.Context, req resour
 	params.Namespace = namespace
 	params.ServiceType = data.ServiceType.ValueString()
 	params.EnableKVStoreMesh = data.EnableKVStoreMesh.ValueBool() //
-	params.EnableExternalWorkloads = data.EnableExternalWorkloads.ValueBool()
 	params.HelmReleaseName = helm_release
 	wait := data.Wait.ValueBool()
 
