@@ -243,6 +243,7 @@ func (r *CiliumClusterMeshConnectResource) Delete(ctx context.Context, req resou
 	params.Namespace = namespace
 	params.HelmReleaseName = helm_release
 	params.ConnectionMode = data.ConnectionMode.ValueString()
+	params.DestinationContext = ValueList(ctx, data.DestinationContexts)
 
 	cm := clustermesh.NewK8sClusterMesh(k8sClient, params)
 	if err := cm.DisconnectWithHelm(context.Background()); err != nil {
