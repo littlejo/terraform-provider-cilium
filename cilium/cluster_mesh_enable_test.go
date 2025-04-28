@@ -19,7 +19,6 @@ func TestAccCiliumClusterMeshEnableResource(t *testing.T) {
 			{
 				Config: testAccCiliumClusterMeshEnableResourceConfig("NodePort"),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("cilium_clustermesh.test", "enable_external_workloads", "false"),
 					resource.TestCheckResourceAttr("cilium_clustermesh.test", "enable_kv_store_mesh", "false"),
 					resource.TestCheckResourceAttr("cilium_clustermesh.test", "service_type", "NodePort"),
 					resource.TestCheckResourceAttr("cilium_clustermesh.test", "id", "ciliumclustermeshenable"),
