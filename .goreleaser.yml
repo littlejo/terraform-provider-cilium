@@ -31,7 +31,6 @@ builds:
     - goos: darwin
       goarch: '386'
     - goos: freebsd
-      goarch: arm
 
   binary: '{{ .ProjectName }}_v{{ .Version }}'
 archives:
