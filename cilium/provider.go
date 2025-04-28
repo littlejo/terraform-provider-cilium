@@ -112,11 +112,10 @@ func (p *CiliumProvider) Configure(ctx context.Context, req provider.ConfigureRe
 		os.Setenv("KUBECONFIG", config_path)
 	}
 
-	//impersonate_as := ""
-	//impersonate_groups := []string{}
+	impersonate_as := ""
+	impersonate_groups := []string{}
 
-	client, err := k8s.NewClient(context, config_path, namespace)
-	//client, err := k8s.NewClient(context, config_path, namespace, impersonate_as, impersonate_groups)
+	client, err := k8s.NewClient(context, config_path, namespace, impersonate_as, impersonate_groups)
 	if err != nil {
 		fmt.Printf("unable to create Kubernetes client: %v\n", err)
 		return
