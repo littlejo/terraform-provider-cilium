@@ -7,14 +7,12 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/cilium/cilium/cilium-cli/defaults"
-	"github.com/cilium/cilium/cilium-cli/hubble"
 	"github.com/cilium/cilium/cilium-cli/install"
-	"github.com/cilium/cilium/pkg/inctimer"
 
 	"helm.sh/helm/v3/pkg/cli/values"
-	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -86,10 +84,10 @@ func (r *CiliumInstallResource) Schema(ctx context.Context, req resource.SchemaR
 				Default:             stringdefault.StaticString(""),
 			},
 			"version": schema.StringAttribute{
-				MarkdownDescription: ConcatDefault("Version of Cilium", defaults.Version),
+				MarkdownDescription: ConcatDefault("Version of Cilium", "1.17.3"),
 				Optional:            true,
 				Computed:            true,
-				Default:             stringdefault.StaticString(defaults.Version),
+				Default:             stringdefault.StaticString("1.17.3"),
 			},
 			"repository": schema.StringAttribute{
 				MarkdownDescription: ConcatDefault("Helm chart repository to download Cilium charts from", defaults.HelmRepository),
@@ -388,37 +386,16 @@ func (r *CiliumInstallResource) Delete(ctx context.Context, req resource.DeleteR
 	uninstaller := install.NewK8sUninstaller(k8sClient, params)
 	uninstaller.DeleteTestNamespace(ctxb)
 
-	var hubbleParams = hubble.Parameters{
-		Writer:          os.Stdout,
-		Wait:            true,
-		Namespace:       namespace,
-		HelmReleaseName: helm_release,
-	}
-
 	if params.Wait {
-		// Disable Hubble, then wait for Pods to terminate before uninstalling Cilium.
-		// This guarantees that relay Pods are terminated fully via Cilium (rather than
-		// being queued for deletion) before uninstalling Cilium.
 		fmt.Printf("⌛ Waiting to disable Hubble before uninstalling Cilium\n")
-		if err := hubble.DisableWithHelm(ctx, k8sClient, hubbleParams); err != nil {
-			fmt.Printf("⚠ ️ Failed to disable Hubble prior to uninstalling Cilium: %s\n", err)
-		}
 		for {
-			ps, err := k8sClient.ListPods(ctx, hubbleParams.Namespace, metav1.ListOptions{
-				LabelSelector: "k8s-app=hubble-relay",
-			})
-			if err != nil {
-				if k8sErrors.IsNotFound(err) {
-					break
-				}
-				resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to list pods waiting for hubble-relay to stop: %s", err))
-			}
-			if len(ps.Items) == 0 {
+			// Wait for the test namespace to be terminated. Subsequent connectivity checks would fail
+			// if the test namespace is in Terminating state.
+			_, err := k8sClient.GetNamespace(ctx, params.TestNamespace, metav1.GetOptions{})
+			if err == nil {
+				time.Sleep(defaults.WaitRetryInterval)
+			} else {
 				break
-			}
-			select {
-			case <-inctimer.After(defaults.WaitRetryInterval):
-			case <-ctx.Done():
 			}
 		}
 	}
