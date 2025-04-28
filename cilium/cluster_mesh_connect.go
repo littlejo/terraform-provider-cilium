@@ -15,6 +15,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int32default"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
@@ -41,6 +42,7 @@ type CiliumClusterMeshConnectResourceModel struct {
 	//SourceEndpoints      types.List `tfsdk:"source_endpoint"`
 	//DestinationEndpoints types.List `tfsdk:"destination_endpoint"`
 	DestinationContexts types.List   `tfsdk:"destination_contexts"`
+	Parallel            types.Int32  `tfsdk:"parallel"`
 	ConnectionMode      types.String `tfsdk:"connection_mode"`
 	Id                  types.String `tfsdk:"id"`
 }
@@ -61,6 +63,12 @@ func (r *CiliumClusterMeshConnectResource) Schema(ctx context.Context, req resou
 				Optional:            true,
 				Computed:            true,
 				Default:             listdefault.StaticValue(types.ListNull(types.StringType)),
+			},
+			"parallel": schema.Int32Attribute{
+				MarkdownDescription: ConcatDefault("Number of parallel connections of destination clusters", "1"),
+				Optional:            true,
+				Computed:            true,
+				Default:             int32default.StaticInt32(1),
 			},
 			"connection_mode": schema.StringAttribute{
 				MarkdownDescription: ConcatDefault("Connection mode. unicast, bidirectional and mesh", "bidirectional"),
@@ -135,7 +143,7 @@ func (r *CiliumClusterMeshConnectResource) Create(ctx context.Context, req resou
 
 	params.DestinationContext = ValueList(ctx, data.DestinationContexts)
 	params.ConnectionMode = data.ConnectionMode.ValueString()
-	params.Parallel = 1
+	params.Parallel = int(data.Parallel.ValueInt32())
 
 	cm := clustermesh.NewK8sClusterMesh(k8sClient, params)
 	if err := cm.ConnectWithHelm(context.Background()); err != nil {
