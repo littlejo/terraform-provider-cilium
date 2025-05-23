@@ -59,7 +59,8 @@ resource "cilium" "example" {
 - `data_path` (String) Datapath mode to use { tunnel | native | aws-eni | gke | azure | aks-byocni } (Default: `autodetected`).
 - `repository` (String) Helm chart repository to download Cilium charts from (Default: `https://helm.cilium.io`).
 - `reset` (Boolean) When upgrading, reset the helm values to the ones built into the chart (Default: `false`).
-- `reuse` (Boolean) When upgrading, reuse the helm values from the latest release unless any overrides from are set from other flags. This option takes precedence over HelmResetValues (Default: `true`).
+- `reuse` (Boolean) When upgrading, reuse the helm values from the latest release unless any overrides from are set from other flags. This option takes precedence over HelmResetValues (Default: `false`).
+- `ResetThenReuseValues` (Boolean) When upgrading, reset the values to the ones built into the chart, apply the last release's values and merge in any overrides from the command line via --set and -f. If '--reset-values' or '--reuse-values' is specified, this is ignored (Default: `true`).
 - `set` (List of String) Set helm values on the command line (can specify multiple or separate values with commas: key1=val1,key2=val2 (Default: `[]`).
 - `values` (String) values in raw yaml to pass to helm. (Default: `empty`).
 - `version` (String) Version of Cilium (Default: `v1.14.5`).
