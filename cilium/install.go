@@ -42,17 +42,18 @@ type CiliumInstallResource struct {
 
 // CiliumInstallResourceModel describes the resource data model.
 type CiliumInstallResourceModel struct {
-	HelmSet    types.List   `tfsdk:"set"`
-	Values     types.String `tfsdk:"values"`
-	Version    types.String `tfsdk:"version"`
-	Repository types.String `tfsdk:"repository"`
-	DataPath   types.String `tfsdk:"data_path"`
-	Wait       types.Bool   `tfsdk:"wait"`
-	Reuse      types.Bool   `tfsdk:"reuse"`
-	Reset      types.Bool   `tfsdk:"reset"`
-	Id         types.String `tfsdk:"id"`
-	HelmValues types.String `tfsdk:"helm_values"`
-	CA         types.Object `tfsdk:"ca"`
+	HelmSet        types.List   `tfsdk:"set"`
+	Values         types.String `tfsdk:"values"`
+	Version        types.String `tfsdk:"version"`
+	Repository     types.String `tfsdk:"repository"`
+	DataPath       types.String `tfsdk:"data_path"`
+	Wait           types.Bool   `tfsdk:"wait"`
+	Reuse          types.Bool   `tfsdk:"reuse"`
+	Reset          types.Bool   `tfsdk:"reset"`
+	ResetThenReuse types.Bool   `tfsdk:"reusethenreuse"`
+	Id             types.String `tfsdk:"id"`
+	HelmValues     types.String `tfsdk:"helm_values"`
+	CA             types.Object `tfsdk:"ca"`
 }
 
 func (r *CiliumInstallResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -102,16 +103,22 @@ func (r *CiliumInstallResource) Schema(ctx context.Context, req resource.SchemaR
 				Default:             stringdefault.StaticString(""),
 			},
 			"reuse": schema.BoolAttribute{
-				MarkdownDescription: ConcatDefault("When upgrading, reuse the helm values from the latest release unless any overrides from are set from other flags. This option takes precedence over HelmResetValues", "true"),
+				MarkdownDescription: ConcatDefault("When upgrading, reuse the helm values from the latest release unless any overrides from are set from other flags. This option takes precedence over HelmResetValues", "false"),
 				Optional:            true,
 				Computed:            true,
-				Default:             booldefault.StaticBool(true),
+				Default:             booldefault.StaticBool(false),
 			},
 			"reset": schema.BoolAttribute{
 				MarkdownDescription: ConcatDefault("When upgrading, reset the helm values to the ones built into the chart", "false"),
 				Optional:            true,
 				Computed:            true,
 				Default:             booldefault.StaticBool(false),
+			},
+			"reusethenreuse": schema.BoolAttribute{
+				MarkdownDescription: ConcatDefault("When upgrading, reset the values to the ones built into the chart, apply the last release's values and merge in any overrides from the command line via --set and -f. If '--reset-values' or '--reuse-values' is specified, this is ignored", "true"),
+				Optional:            true,
+				Computed:            true,
+				Default:             booldefault.StaticBool(true),
 			},
 			"wait": schema.BoolAttribute{
 				MarkdownDescription: ConcatDefault("Wait for Cilium status is ok", "true"),
@@ -303,6 +310,7 @@ func (r *CiliumInstallResource) Update(ctx context.Context, req resource.UpdateR
 	params.HelmReleaseName = helm_release
 	params.HelmResetValues = data.Reset.ValueBool()
 	params.HelmReuseValues = data.Reuse.ValueBool()
+	params.HelmResetThenReuseValues = data.ResetThenReuse.ValueBool()
 	wait := data.Wait.ValueBool()
 
 	options.Values = ValueList(ctx, data.HelmSet)
