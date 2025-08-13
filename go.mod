@@ -2,7 +2,7 @@ module github.com/littlejo/terraform-provider-cilium
 
 go 1.24.0
 
-toolchain go1.24.4
+toolchain go1.25.0
 
 require (
 	github.com/cilium/cilium v1.18.0-pre.3
