@@ -10,7 +10,7 @@ require (
 	github.com/hashicorp/terraform-plugin-framework v1.15.1
 	github.com/hashicorp/terraform-plugin-go v0.28.0
 	github.com/hashicorp/terraform-plugin-log v0.9.0
-	github.com/hashicorp/terraform-plugin-testing v1.13.2
+	github.com/hashicorp/terraform-plugin-testing v1.13.3
 	gopkg.in/yaml.v3 v3.0.1
 	helm.sh/helm/v3 v3.18.3
 	k8s.io/apimachinery v0.33.3
