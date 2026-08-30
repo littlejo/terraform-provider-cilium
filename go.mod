@@ -1,15 +1,13 @@
 module github.com/littlejo/terraform-provider-cilium
 
-go 1.24.0
-
-toolchain go1.24.4
+go 1.25.0
 
 require (
 	github.com/cilium/cilium v1.18.0-pre.3
 	github.com/hashicorp/terraform-plugin-docs v0.22.0
 	github.com/hashicorp/terraform-plugin-framework v1.15.1
 	github.com/hashicorp/terraform-plugin-go v0.28.0
-	github.com/hashicorp/terraform-plugin-log v0.9.0
+	github.com/hashicorp/terraform-plugin-log v0.11.0
 	github.com/hashicorp/terraform-plugin-testing v1.13.2
 	gopkg.in/yaml.v3 v3.0.1
 	helm.sh/helm/v3 v3.18.3
