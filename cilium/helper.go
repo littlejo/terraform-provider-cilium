@@ -52,6 +52,10 @@ func ConcatDefault(text string, d string) string {
 	return fmt.Sprintf("%s (Default: `%s`).", text, d)
 }
 
+// DefaultCiliumVersion is the Cilium version installed when none is specified.
+// renovate: datasource=github-releases depName=cilium/cilium
+const DefaultCiliumVersion = "1.20.4"
+
 // tempFiles tracks the temporary files that must outlive a single RPC (e.g. the
 // kubeconfig written from config_content) so they can be removed on exit.
 var (
