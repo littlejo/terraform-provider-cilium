@@ -101,8 +101,8 @@ func (r *CiliumConfigResource) Configure(ctx context.Context, req resource.Confi
 func (r *CiliumConfigResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var data CiliumConfigResourceModel
 	c := r.client
-	if c == nil {
-		resp.Diagnostics.AddError("Client Error", "Unable to connect to kubernetes")
+	if err := c.Ready(); err != nil {
+		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
 	}
 	k8sClient, namespace := c.client, c.namespace
@@ -122,7 +122,7 @@ func (r *CiliumConfigResource) Create(ctx context.Context, req resource.CreateRe
 	params.Restart = data.Restart.ValueBool()
 
 	check := config.NewK8sConfig(k8sClient, params)
-	if err := check.Set(context.Background(), key, value, params); err != nil {
+	if err := check.Set(ctx, key, value, params); err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to set config: %s", err))
 		return
 	}
@@ -142,8 +142,8 @@ func (r *CiliumConfigResource) Create(ctx context.Context, req resource.CreateRe
 func (r *CiliumConfigResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data CiliumConfigResourceModel
 	c := r.client
-	if c == nil {
-		resp.Diagnostics.AddError("Client Error", "Unable to connect to kubernetes")
+	if err := c.Ready(); err != nil {
+		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
 	}
 	k8sClient, namespace := c.client, c.namespace
@@ -182,7 +182,7 @@ func (r *CiliumConfigResource) Read(ctx context.Context, req resource.ReadReques
 	}
 
 	check := config.NewK8sConfig(k8sClient, params)
-	out, err := check.View(context.Background())
+	out, err := check.View(ctx)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to view config: %s", err))
 		return
@@ -207,8 +207,8 @@ func (r *CiliumConfigResource) Read(ctx context.Context, req resource.ReadReques
 func (r *CiliumConfigResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var data CiliumConfigResourceModel
 	c := r.client
-	if c == nil {
-		resp.Diagnostics.AddError("Client Error", "Unable to connect to kubernetes")
+	if err := c.Ready(); err != nil {
+		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
 	}
 	k8sClient, namespace := c.client, c.namespace
@@ -229,7 +229,7 @@ func (r *CiliumConfigResource) Update(ctx context.Context, req resource.UpdateRe
 	params.Restart = data.Restart.ValueBool()
 
 	check := config.NewK8sConfig(k8sClient, params)
-	if err := check.Set(context.Background(), key, value, params); err != nil {
+	if err := check.Set(ctx, key, value, params); err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to set config: %s", err))
 		return
 	}
@@ -241,8 +241,8 @@ func (r *CiliumConfigResource) Update(ctx context.Context, req resource.UpdateRe
 func (r *CiliumConfigResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data CiliumConfigResourceModel
 	c := r.client
-	if c == nil {
-		resp.Diagnostics.AddError("Client Error", "Unable to connect to kubernetes")
+	if err := c.Ready(); err != nil {
+		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
 	}
 	k8sClient, namespace := c.client, c.namespace
@@ -262,7 +262,7 @@ func (r *CiliumConfigResource) Delete(ctx context.Context, req resource.DeleteRe
 	params.Restart = data.Restart.ValueBool()
 
 	check := config.NewK8sConfig(k8sClient, params)
-	if err := check.Delete(context.Background(), key, params); err != nil {
+	if err := check.Delete(ctx, key, params); err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete config: %s", err))
 		return
 	}

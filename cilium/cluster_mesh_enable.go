@@ -105,8 +105,8 @@ func (r *CiliumClusterMeshEnableResource) Configure(ctx context.Context, req res
 func (r *CiliumClusterMeshEnableResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var data CiliumClusterMeshEnableResourceModel
 	c := r.client
-	if c == nil {
-		resp.Diagnostics.AddError("Client Error", "Unable to connect to kubernetes")
+	if err := c.Ready(); err != nil {
+		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
 	}
 	k8sClient, namespace, helm_release := c.client, c.namespace, c.helm_release
@@ -122,18 +122,17 @@ func (r *CiliumClusterMeshEnableResource) Create(ctx context.Context, req resour
 	}
 	params.Namespace = namespace
 	params.ServiceType = data.ServiceType.ValueString()
-	params.EnableKVStoreMesh = data.EnableKVStoreMesh.ValueBool() //
+	params.EnableKVStoreMesh = data.EnableKVStoreMesh.ValueBool()
 	params.HelmReleaseName = helm_release
 	wait := data.Wait.ValueBool()
 
-	ctxb := context.Background()
-	if err := clustermesh.EnableWithHelm(ctxb, k8sClient, params); err != nil {
+	if err := clustermesh.EnableWithHelm(ctx, k8sClient, params); err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to enable ClusterMesh: %s", err))
 		return
 	}
 
 	if wait {
-		if err := c.WaitClusterMesh(); err != nil {
+		if err := c.WaitClusterMesh(ctx); err != nil {
 			resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to enable ClusterMesh: %s", err))
 			return
 		}
@@ -157,8 +156,8 @@ func (r *CiliumClusterMeshEnableResource) Read(ctx context.Context, req resource
 		Writer: os.Stdout,
 	}
 	c := r.client
-	if c == nil {
-		resp.Diagnostics.AddError("Client Error", "Unable to connect to kubernetes")
+	if err := c.Ready(); err != nil {
+		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
 	}
 	k8sClient, namespace, helm_release := c.client, c.namespace, c.helm_release
@@ -176,8 +175,8 @@ func (r *CiliumClusterMeshEnableResource) Read(ctx context.Context, req resource
 	params.HelmReleaseName = helm_release
 
 	cm := clustermesh.NewK8sClusterMesh(k8sClient, params)
-	if _, err := cm.Status(context.Background()); err != nil {
-		fmt.Printf("Unable to determine status: %s\n", err)
+	if _, err := cm.Status(ctx); err != nil {
+		tflog.Warn(ctx, "Unable to determine ClusterMesh status, removing resource from state", map[string]any{"error": err.Error()})
 		resp.State.RemoveResource(ctx)
 		return
 	}
@@ -189,8 +188,8 @@ func (r *CiliumClusterMeshEnableResource) Read(ctx context.Context, req resource
 func (r *CiliumClusterMeshEnableResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var data CiliumClusterMeshEnableResourceModel
 	c := r.client
-	if c == nil {
-		resp.Diagnostics.AddError("Client Error", "Unable to connect to kubernetes")
+	if err := c.Ready(); err != nil {
+		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
 	}
 	k8sClient, namespace, helm_release := c.client, c.namespace, c.helm_release
@@ -206,18 +205,17 @@ func (r *CiliumClusterMeshEnableResource) Update(ctx context.Context, req resour
 	}
 	params.Namespace = namespace
 	params.ServiceType = data.ServiceType.ValueString()
-	params.EnableKVStoreMesh = data.EnableKVStoreMesh.ValueBool() //
+	params.EnableKVStoreMesh = data.EnableKVStoreMesh.ValueBool()
 	params.HelmReleaseName = helm_release
 	wait := data.Wait.ValueBool()
 
-	ctxb := context.Background()
-	if err := clustermesh.EnableWithHelm(ctxb, k8sClient, params); err != nil {
+	if err := clustermesh.EnableWithHelm(ctx, k8sClient, params); err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to enable ClusterMesh: %s", err))
 		return
 	}
 
 	if wait {
-		if err := c.WaitClusterMesh(); err != nil {
+		if err := c.WaitClusterMesh(ctx); err != nil {
 			resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to enable ClusterMesh: %s", err))
 			return
 		}
@@ -230,8 +228,8 @@ func (r *CiliumClusterMeshEnableResource) Update(ctx context.Context, req resour
 func (r *CiliumClusterMeshEnableResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data CiliumClusterMeshEnableResourceModel
 	c := r.client
-	if c == nil {
-		resp.Diagnostics.AddError("Client Error", "Unable to connect to kubernetes")
+	if err := c.Ready(); err != nil {
+		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
 	}
 	k8sClient, namespace, helm_release := c.client, c.namespace, c.helm_release
@@ -248,9 +246,8 @@ func (r *CiliumClusterMeshEnableResource) Delete(ctx context.Context, req resour
 
 	params.Namespace = namespace
 	params.HelmReleaseName = helm_release
-	ctxb := context.Background()
 
-	if err := clustermesh.DisableWithHelm(ctxb, k8sClient, params); err != nil {
+	if err := clustermesh.DisableWithHelm(ctx, k8sClient, params); err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to disable ClusterMesh: %s", err))
 		return
 	}
