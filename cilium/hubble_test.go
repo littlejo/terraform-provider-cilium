@@ -39,7 +39,7 @@ func TestAccCiliumHubbleResource(t *testing.T) {
 func testAccCiliumHubbleResourceConfig(ui string) string {
 	return fmt.Sprintf(`
 resource "cilium" "test" {
-  version = "1.16.1"
+  version = "1.20.4"
 }
 resource "cilium_hubble" "test" {
   ui         = %s
