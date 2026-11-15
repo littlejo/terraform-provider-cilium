@@ -8,7 +8,7 @@ import (
 	"fmt"
 
 	"gopkg.in/yaml.v3"
-	"helm.sh/helm/v3/pkg/action"
+	"helm.sh/helm/v4/pkg/action"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
@@ -87,9 +87,8 @@ func (d *CiliumHelmValuesDataSource) Read(ctx context.Context, req datasource.Re
 		return
 	}
 	actionConfig := action.Configuration{}
-	logger := func(format string, v ...interface{}) {}
 	helmDriver := ""
-	if err := actionConfig.Init(k8sClient.RESTClientGetter, namespace, helmDriver, logger); err != nil {
+	if err := actionConfig.Init(k8sClient.RESTClientGetter, namespace, helmDriver); err != nil {
 		return
 	}
 
