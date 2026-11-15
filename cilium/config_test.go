@@ -40,7 +40,7 @@ func TestAccCiliumConfigResource(t *testing.T) {
 func testAccCiliumConfigResourceConfig(key string, value string) string {
 	return fmt.Sprintf(`
 resource "cilium" "test" {
-  version = "1.16.1"
+  version = "1.20.4"
 }
 resource "cilium_config" "test" {
   key        = %[1]q

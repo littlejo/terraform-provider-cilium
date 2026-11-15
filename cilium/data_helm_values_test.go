@@ -29,7 +29,7 @@ func TestAccCiliumHelmValuesDataSource(t *testing.T) {
 func testAccCiliumHelmValuesDataSourceConfig() string {
 	return `
 resource "cilium" "test" {
-  version = "1.16.1"
+  version = "1.20.4"
 }
 
 data "cilium_helm_values" "test" {
