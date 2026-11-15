@@ -1,16 +1,51 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
-    "config:base"
+    "config:recommended",
+    "helpers:pinGitHubActionDigestsToSemver"
+  ],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "Default Cilium version installed by the provider",
+      "managerFilePatterns": ["/^cilium/helper\\.go$/"],
+      "matchStrings": [
+        "// renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)\\n.*?\"(?<currentValue>[^\"]+)\""
+      ],
+      "extractVersionTemplate": "^v?(?<version>.*)$"
+    },
+    {
+      "customType": "regex",
+      "description": "cilium-cli release used to pin github.com/cilium/cilium (run `make update-cilium-cli` after the bump)",
+      "managerFilePatterns": ["/^GNUmakefile$/"],
+      "matchStrings": ["CILIUM_CLI_VERSION\\?=(?<currentValue>\\S+)"],
+      "datasourceTemplate": "github-releases",
+      "depNameTemplate": "cilium/cilium-cli"
+    }
   ],
   "packageRules": [
     {
-      "managers": ["terraform"],
-      "matchPackageNames": ["cilium"],
-      "registryUrls": [
-        "https://github.com/cilium/cilium"
-      ],
-      "versioning": "semver"
+      "description": "cilium-cli is not shipped in Cilium release tags: follow cilium-cli releases with `make update-cilium-cli` instead",
+      "matchManagers": ["gomod"],
+      "matchPackageNames": ["github.com/cilium/cilium"],
+      "enabled": false
+    },
+    {
+      "description": "Kubernetes and Helm libraries must stay compatible with the Cilium version",
+      "matchManagers": ["gomod"],
+      "matchPackageNames": ["k8s.io/**", "sigs.k8s.io/**", "helm.sh/**"],
+      "groupName": "kubernetes and helm libraries"
+    },
+    {
+      "matchManagers": ["github-actions"],
+      "matchUpdateTypes": ["minor", "patch", "digest", "pinDigest"],
+      "automerge": true
+    },
+    {
+      "matchManagers": ["gomod"],
+      "matchPackageNames": ["github.com/hashicorp/**"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "automerge": true
     }
   ]
 }
