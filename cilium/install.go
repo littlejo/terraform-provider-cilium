@@ -31,6 +31,7 @@ import (
 // Ensure provider defined types fully satisfy framework interfaces.
 var _ resource.Resource = &CiliumInstallResource{}
 var _ resource.ResourceWithImportState = &CiliumInstallResource{}
+var _ resource.ResourceWithUpgradeState = &CiliumInstallResource{}
 
 func NewCiliumInstallResource() resource.Resource {
 	return &CiliumInstallResource{}
@@ -43,6 +44,23 @@ type CiliumInstallResource struct {
 
 // CiliumInstallResourceModel describes the resource data model.
 type CiliumInstallResourceModel struct {
+	HelmSet              types.List   `tfsdk:"set"`
+	Values               types.String `tfsdk:"values"`
+	Version              types.String `tfsdk:"version"`
+	Repository           types.String `tfsdk:"repository"`
+	DataPath             types.String `tfsdk:"data_path"`
+	Wait                 types.Bool   `tfsdk:"wait"`
+	Reuse                types.Bool   `tfsdk:"reuse"`
+	Reset                types.Bool   `tfsdk:"reset"`
+	ResetThenReuse       types.Bool   `tfsdk:"reset_then_reuse"`
+	ResetThenReuseLegacy types.Bool   `tfsdk:"reusethenreuse"`
+	Id                   types.String `tfsdk:"id"`
+	HelmValues           types.String `tfsdk:"helm_values"`
+	CA                   types.Object `tfsdk:"ca"`
+}
+
+// CiliumInstallResourceModelV0 describes the resource data model of schema version 0 (provider <= 0.3.x).
+type CiliumInstallResourceModelV0 struct {
 	HelmSet        types.List   `tfsdk:"set"`
 	Values         types.String `tfsdk:"values"`
 	Version        types.String `tfsdk:"version"`
@@ -66,12 +84,14 @@ func (r *CiliumInstallResource) Schema(ctx context.Context, req resource.SchemaR
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
 		MarkdownDescription: "Install resource for Cilium. This is equivalent to cilium cli: `cilium install`, `cilium upgrade` and `cilium uninstall`: It manages cilium helm chart",
+		Version:             1,
 
 		Attributes: map[string]schema.Attribute{
 			"ca": schema.ObjectAttribute{
-				AttributeTypes: CaAttributeTypes,
-				Computed:       true,
-				Sensitive:      true,
+				AttributeTypes:      CaAttributeTypes,
+				Computed:            true,
+				Sensitive:           true,
+				MarkdownDescription: "Cilium certificates value, Format: `{crt: \"b64...\", key: \"b64..\"}` (Equivalent to `kubectl get secret cilium-ca -n kube-system -o yaml`)",
 			},
 			"set": schema.ListAttribute{
 				ElementType:         types.StringType,
@@ -87,10 +107,12 @@ func (r *CiliumInstallResource) Schema(ctx context.Context, req resource.SchemaR
 				Default:             stringdefault.StaticString(""),
 			},
 			"version": schema.StringAttribute{
-				MarkdownDescription: ConcatDefault("Version of Cilium", "1.17.3"),
+				MarkdownDescription: ConcatDefault("Version of Cilium. When not set, new installations use the default version and existing installations keep their current version", DefaultCiliumVersion),
 				Optional:            true,
 				Computed:            true,
-				Default:             stringdefault.StaticString("1.17.3"),
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"repository": schema.StringAttribute{
 				MarkdownDescription: ConcatDefault("Helm chart repository to download Cilium charts from", defaults.HelmRepository),
@@ -116,11 +138,16 @@ func (r *CiliumInstallResource) Schema(ctx context.Context, req resource.SchemaR
 				Computed:            true,
 				Default:             booldefault.StaticBool(false),
 			},
-			"reusethenreuse": schema.BoolAttribute{
+			"reset_then_reuse": schema.BoolAttribute{
 				MarkdownDescription: ConcatDefault(resetThenReuseDescription, "true"),
 				Optional:            true,
 				Computed:            true,
 				Default:             booldefault.StaticBool(true),
+			},
+			"reusethenreuse": schema.BoolAttribute{
+				MarkdownDescription: resetThenReuseDescription + ". **Deprecated**: use `reset_then_reuse` instead.",
+				DeprecationMessage:  "Use reset_then_reuse instead. This attribute will be removed in a future major version.",
+				Optional:            true,
 			},
 			"wait": schema.BoolAttribute{
 				MarkdownDescription: ConcatDefault("Wait for Cilium status is ok", "true"),
@@ -138,6 +165,57 @@ func (r *CiliumInstallResource) Schema(ctx context.Context, req resource.SchemaR
 			"helm_values": schema.StringAttribute{
 				Computed:            true,
 				MarkdownDescription: "Helm values (`helm get values -n kube-system cilium`)",
+			},
+		},
+	}
+}
+
+func (r *CiliumInstallResource) UpgradeState(ctx context.Context) map[int64]resource.StateUpgrader {
+	return map[int64]resource.StateUpgrader{
+		// Schema version 0 (provider <= 0.3.x) used the misspelled "reusethenreuse" attribute.
+		0: {
+			PriorSchema: &schema.Schema{
+				Attributes: map[string]schema.Attribute{
+					"ca":             schema.ObjectAttribute{AttributeTypes: CaAttributeTypes, Computed: true, Sensitive: true},
+					"set":            schema.ListAttribute{ElementType: types.StringType, Optional: true, Computed: true},
+					"values":         schema.StringAttribute{Optional: true, Computed: true},
+					"version":        schema.StringAttribute{Optional: true, Computed: true},
+					"repository":     schema.StringAttribute{Optional: true, Computed: true},
+					"data_path":      schema.StringAttribute{Optional: true, Computed: true},
+					"reuse":          schema.BoolAttribute{Optional: true, Computed: true},
+					"reset":          schema.BoolAttribute{Optional: true, Computed: true},
+					"reusethenreuse": schema.BoolAttribute{Optional: true, Computed: true},
+					"wait":           schema.BoolAttribute{Optional: true, Computed: true},
+					"id":             schema.StringAttribute{Computed: true},
+					"helm_values":    schema.StringAttribute{Computed: true},
+				},
+			},
+			StateUpgrader: func(ctx context.Context, req resource.UpgradeStateRequest, resp *resource.UpgradeStateResponse) {
+				var prior CiliumInstallResourceModelV0
+				resp.Diagnostics.Append(req.State.Get(ctx, &prior)...)
+				if resp.Diagnostics.HasError() {
+					return
+				}
+				resetThenReuse := prior.ResetThenReuse
+				if resetThenReuse.IsNull() || resetThenReuse.IsUnknown() {
+					resetThenReuse = types.BoolValue(true)
+				}
+				upgraded := CiliumInstallResourceModel{
+					HelmSet:              prior.HelmSet,
+					Values:               prior.Values,
+					Version:              prior.Version,
+					Repository:           prior.Repository,
+					DataPath:             prior.DataPath,
+					Wait:                 prior.Wait,
+					Reuse:                prior.Reuse,
+					Reset:                prior.Reset,
+					ResetThenReuse:       resetThenReuse,
+					ResetThenReuseLegacy: types.BoolNull(),
+					Id:                   prior.Id,
+					HelmValues:           prior.HelmValues,
+					CA:                   prior.CA,
+				}
+				resp.Diagnostics.Append(resp.State.Set(ctx, upgraded)...)
 			},
 		},
 	}
@@ -179,6 +257,9 @@ func (c *CiliumClient) installParameters(ctx context.Context, data *CiliumInstal
 	params.HelmResetValues = data.Reset.ValueBool()
 	params.HelmReuseValues = data.Reuse.ValueBool()
 	params.HelmResetThenReuseValues = data.ResetThenReuse.ValueBool()
+	if !data.ResetThenReuseLegacy.IsNull() && !data.ResetThenReuseLegacy.IsUnknown() {
+		params.HelmResetThenReuseValues = data.ResetThenReuseLegacy.ValueBool()
+	}
 
 	options.Values = ValueList(ctx, data.HelmSet)
 
@@ -229,6 +310,10 @@ func (r *CiliumInstallResource) Create(ctx context.Context, req resource.CreateR
 
 	if resp.Diagnostics.HasError() {
 		return
+	}
+
+	if data.Version.IsNull() || data.Version.IsUnknown() {
+		data.Version = types.StringValue(DefaultCiliumVersion)
 	}
 
 	params, cleanup, diags := c.installParameters(ctx, &data)
@@ -319,6 +404,15 @@ func (r *CiliumInstallResource) Update(ctx context.Context, req resource.UpdateR
 
 	if resp.Diagnostics.HasError() {
 		return
+	}
+
+	if data.Version.IsNull() || data.Version.IsUnknown() {
+		var state CiliumInstallResourceModel
+		resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+		data.Version = state.Version
 	}
 
 	params, cleanup, diags := c.installParameters(ctx, &data)
