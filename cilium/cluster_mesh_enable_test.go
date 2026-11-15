@@ -40,6 +40,11 @@ func testAccCiliumClusterMeshEnableResourceConfig(service_type string) string {
 	return fmt.Sprintf(`
 resource "cilium" "test" {
   version = "1.20.4"
+  # ClusterMesh requires a non-default cluster name and ID.
+  set = [
+    "cluster.name=test",
+    "cluster.id=1",
+  ]
 }
 resource "cilium_clustermesh" "test" {
   service_type = %[1]q
