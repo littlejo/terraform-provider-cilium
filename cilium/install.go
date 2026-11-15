@@ -15,6 +15,7 @@ import (
 	"helm.sh/helm/v4/pkg/cli/values"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -61,6 +62,7 @@ func (r *CiliumInstallResource) Metadata(ctx context.Context, req resource.Metad
 }
 
 func (r *CiliumInstallResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+	resetThenReuseDescription := "When upgrading, reset the values to the ones built into the chart, apply the last release's values and merge in any overrides from the command line via --set and -f. If '--reset-values' or '--reuse-values' is specified, this is ignored"
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
 		MarkdownDescription: "Install resource for Cilium. This is equivalent to cilium cli: `cilium install`, `cilium upgrade` and `cilium uninstall`: It manages cilium helm chart",
@@ -115,7 +117,7 @@ func (r *CiliumInstallResource) Schema(ctx context.Context, req resource.SchemaR
 				Default:             booldefault.StaticBool(false),
 			},
 			"reusethenreuse": schema.BoolAttribute{
-				MarkdownDescription: ConcatDefault("When upgrading, reset the values to the ones built into the chart, apply the last release's values and merge in any overrides from the command line via --set and -f. If '--reset-values' or '--reuse-values' is specified, this is ignored", "true"),
+				MarkdownDescription: ConcatDefault(resetThenReuseDescription, "true"),
 				Optional:            true,
 				Computed:            true,
 				Default:             booldefault.StaticBool(true),
@@ -161,16 +163,66 @@ func (r *CiliumInstallResource) Configure(ctx context.Context, req resource.Conf
 	r.client = client
 }
 
+// installParameters builds the cilium-cli install parameters from the resource model.
+// The returned cleanup function removes the temporary values file, if any.
+func (c *CiliumClient) installParameters(ctx context.Context, data *CiliumInstallResourceModel) (install.Parameters, func(), diag.Diagnostics) {
+	var diags diag.Diagnostics
+	var options values.Options
+	cleanup := func() {}
+
+	params := install.Parameters{Writer: os.Stdout}
+	params.Namespace = c.namespace
+	params.HelmReleaseName = c.helm_release
+	params.Version = data.Version.ValueString()
+	params.HelmRepository = data.Repository.ValueString()
+	params.DatapathMode = data.DataPath.ValueString()
+	params.HelmResetValues = data.Reset.ValueBool()
+	params.HelmReuseValues = data.Reuse.ValueBool()
+	params.HelmResetThenReuseValues = data.ResetThenReuse.ValueBool()
+
+	options.Values = ValueList(ctx, data.HelmSet)
+
+	if v := data.Values.ValueString(); v != "" {
+		f, err := writeTempFile(".values.*.yaml", []byte(v))
+		if err != nil {
+			diags.AddError("Client Error", fmt.Sprintf("Unable to write Helm values to a temporary file: %s", err))
+			return params, cleanup, diags
+		}
+		cleanup = func() { os.Remove(f) }
+		options.ValueFiles = []string{f}
+	}
+	params.HelmOpts = options
+
+	return params, cleanup, diags
+}
+
+// refresh updates the computed attributes of the model from the cluster.
+func (c *CiliumClient) refresh(ctx context.Context, data *CiliumInstallResourceModel) diag.Diagnostics {
+	var diags diag.Diagnostics
+
+	helm_values, err := c.GetHelmValues()
+	if err != nil {
+		diags.AddError("Client Error", fmt.Sprintf("Unable to read Cilium Helm values: %s", err))
+		return diags
+	}
+	ca, err := c.GetCA(ctx)
+	if err != nil {
+		diags.AddError("Client Error", fmt.Sprintf("Unable to retrieve cilium-ca: %s", err))
+		return diags
+	}
+	data.CA = types.ObjectValueMust(CaAttributeTypes, ca)
+	data.HelmValues = types.StringValue(helm_values)
+	return diags
+}
+
 func (r *CiliumInstallResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var data CiliumInstallResourceModel
 	c := r.client
-	if c == nil {
-		resp.Diagnostics.AddError("Client Error", "Unable to connect to kubernetes")
+	if err := c.Ready(); err != nil {
+		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
 	}
-	k8sClient, namespace, helm_release := c.client, c.namespace, c.helm_release
-	var params = install.Parameters{Writer: os.Stdout}
-	var options values.Options
+	k8sClient := c.client
 
 	// Read Terraform plan data into the model
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
@@ -178,33 +230,13 @@ func (r *CiliumInstallResource) Create(ctx context.Context, req resource.CreateR
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	params.Namespace = namespace
-	params.Version = data.Version.ValueString()
-	params.HelmReleaseName = helm_release
-	wait := data.Wait.ValueBool()
 
-	options.Values = ValueList(ctx, data.HelmSet)
-
-	values := data.Values.ValueString()
-
-	if values != "" {
-		f, err := os.CreateTemp("", ".values.*.yaml")
-		if err != nil {
-			resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to create Cilium installer: %s", err))
-		}
-		defer os.Remove(f.Name())
-
-		if _, err := f.Write([]byte(values)); err != nil {
-			f.Close()
-			resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to create Cilium installer: %s", err))
-		}
-		if err := f.Close(); err != nil {
-			resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to create Cilium installer: %s", err))
-		}
-		options.ValueFiles = []string{f.Name()}
+	params, cleanup, diags := c.installParameters(ctx, &data)
+	defer cleanup()
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
-
-	params.HelmOpts = options
 
 	installer, err := install.NewK8sInstaller(k8sClient, params)
 	if err != nil {
@@ -212,29 +244,23 @@ func (r *CiliumInstallResource) Create(ctx context.Context, req resource.CreateR
 		return
 	}
 
-	if err := installer.InstallWithHelm(context.Background(), k8sClient); err != nil {
+	if err := installer.InstallWithHelm(ctx, k8sClient); err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to install Cilium: %s", err))
 		return
 	}
 
-	if wait {
-		if err := c.Wait(); err != nil {
+	if data.Wait.ValueBool() {
+		if err := c.Wait(ctx); err != nil {
+			resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Cilium was installed but did not become ready: %s", err))
 			return
 		}
 	}
-	data.Id = types.StringValue(helm_release)
-	helm_values, err := c.GetHelmValues()
-	if err != nil {
-		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to install Cilium: %s", err))
+	data.Id = types.StringValue(c.helm_release)
+
+	resp.Diagnostics.Append(c.refresh(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
 		return
 	}
-	ca, err := c.GetCA(ctx)
-	if err != nil {
-		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to retrieve cilium-ca: %s", err))
-		return
-	}
-	data.CA = types.ObjectValueMust(CaAttributeTypes, ca)
-	data.HelmValues = types.StringValue(helm_values)
 
 	// Write logs using the tflog package
 	// Documentation: https://terraform.io/plugin/log
@@ -247,8 +273,8 @@ func (r *CiliumInstallResource) Create(ctx context.Context, req resource.CreateR
 func (r *CiliumInstallResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data CiliumInstallResourceModel
 	c := r.client
-	if c == nil {
-		resp.Diagnostics.AddError("Client Error", "Unable to connect to kubernetes")
+	if err := c.Ready(); err != nil {
+		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
 	}
 
@@ -259,29 +285,21 @@ func (r *CiliumInstallResource) Read(ctx context.Context, req resource.ReadReque
 		return
 	}
 
-	_, err := c.GetCurrentRelease()
-	if err != nil {
+	if err := c.ReleaseExists(); err != nil {
 		resp.State.RemoveResource(ctx)
-		return
-	}
-	helm_values, err := c.GetHelmValues()
-	if err != nil {
-		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read tfstate: %s", err))
 		return
 	}
 	version, err := c.GetMetadata()
 	if err != nil {
-		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read tfstate: %s", err))
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read Cilium Helm metadata: %s", err))
 		return
 	}
-	ca, err := c.GetCA(ctx)
-	if err != nil {
-		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to retrieve cilium-ca: %s", err))
-		return
-	}
-	data.CA = types.ObjectValueMust(CaAttributeTypes, ca)
-	data.HelmValues = types.StringValue(helm_values)
 	data.Version = types.StringValue(version)
+
+	resp.Diagnostics.Append(c.refresh(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -290,13 +308,11 @@ func (r *CiliumInstallResource) Read(ctx context.Context, req resource.ReadReque
 func (r *CiliumInstallResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var data CiliumInstallResourceModel
 	c := r.client
-	if c == nil {
-		resp.Diagnostics.AddError("Client Error", "Unable to connect to kubernetes")
+	if err := c.Ready(); err != nil {
+		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
 	}
-	k8sClient, namespace, helm_release := c.client, c.namespace, c.helm_release
-	var params = install.Parameters{Writer: os.Stdout}
-	var options values.Options
+	k8sClient := c.client
 
 	// Read Terraform plan data into the model
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
@@ -305,63 +321,34 @@ func (r *CiliumInstallResource) Update(ctx context.Context, req resource.UpdateR
 		return
 	}
 
-	params.Namespace = namespace
-	params.Version = data.Version.ValueString()
-	params.HelmReleaseName = helm_release
-	params.HelmResetValues = data.Reset.ValueBool()
-	params.HelmReuseValues = data.Reuse.ValueBool()
-	params.HelmResetThenReuseValues = data.ResetThenReuse.ValueBool()
-	wait := data.Wait.ValueBool()
-
-	options.Values = ValueList(ctx, data.HelmSet)
-
-	values := data.Values.ValueString()
-
-	if values != "" {
-		f, err := os.CreateTemp("", ".values.*.yaml")
-		if err != nil {
-			resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to create Cilium installer: %s", err))
-		}
-		defer os.Remove(f.Name())
-
-		if _, err := f.Write([]byte(values)); err != nil {
-			f.Close()
-			resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to create Cilium installer: %s", err))
-		}
-		if err := f.Close(); err != nil {
-			resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to create Cilium installer: %s", err))
-		}
-		options.ValueFiles = []string{f.Name()}
+	params, cleanup, diags := c.installParameters(ctx, &data)
+	defer cleanup()
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
-	params.HelmOpts = options
 
 	installer, err := install.NewK8sInstaller(k8sClient, params)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to upgrade Cilium: %s", err))
 		return
 	}
-	if err := installer.UpgradeWithHelm(context.Background(), k8sClient); err != nil {
+	if err := installer.UpgradeWithHelm(ctx, k8sClient); err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to upgrade Cilium: %s", err))
 		return
 	}
-	if wait {
-		if err := c.Wait(); err != nil {
+	if data.Wait.ValueBool() {
+		if err := c.Wait(ctx); err != nil {
+			resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Cilium was upgraded but did not become ready: %s", err))
 			return
 		}
 	}
 
-	helm_values, err := c.GetHelmValues()
-	if err != nil {
-		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to upgrade Cilium: %s", err))
+	resp.Diagnostics.Append(c.refresh(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
 		return
 	}
-	ca, err := c.GetCA(ctx)
-	if err != nil {
-		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to retrieve cilium-ca: %s", err))
-		return
-	}
-	data.CA = types.ObjectValueMust(CaAttributeTypes, ca)
-	data.HelmValues = types.StringValue(helm_values)
+
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -369,8 +356,8 @@ func (r *CiliumInstallResource) Update(ctx context.Context, req resource.UpdateR
 func (r *CiliumInstallResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data CiliumInstallResourceModel
 	c := r.client
-	if c == nil {
-		resp.Diagnostics.AddError("Client Error", "Unable to connect to kubernetes")
+	if err := c.Ready(); err != nil {
+		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
 	}
 	k8sClient, namespace, helm_release := c.client, c.namespace, c.helm_release
@@ -389,26 +376,29 @@ func (r *CiliumInstallResource) Delete(ctx context.Context, req resource.DeleteR
 	params.Wait = data.Wait.ValueBool()
 
 	params.Timeout = defaults.UninstallTimeout
-	ctxb := context.Background()
 
 	uninstaller := install.NewK8sUninstaller(k8sClient, params)
-	uninstaller.DeleteTestNamespace(ctxb)
+	uninstaller.DeleteTestNamespace(ctx)
 
 	if params.Wait {
-		fmt.Printf("⌛ Waiting to disable Hubble before uninstalling Cilium\n")
+		tflog.Info(ctx, "Waiting for the connectivity test namespace to be deleted before uninstalling Cilium")
 		for {
 			// Wait for the test namespace to be terminated. Subsequent connectivity checks would fail
 			// if the test namespace is in Terminating state.
 			_, err := k8sClient.GetNamespace(ctx, params.TestNamespace, metav1.GetOptions{})
-			if err == nil {
-				time.Sleep(defaults.WaitRetryInterval)
-			} else {
+			if err != nil {
 				break
+			}
+			select {
+			case <-ctx.Done():
+				resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Timed out waiting for namespace %s to be deleted: %s", params.TestNamespace, ctx.Err()))
+				return
+			case <-time.After(defaults.WaitRetryInterval):
 			}
 		}
 	}
-	if err := uninstaller.UninstallWithHelm(ctxb, k8sClient.HelmActionConfig); err != nil {
-		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("⚠ ️ Unable to uninstall Cilium: %s", err))
+	if err := uninstaller.UninstallWithHelm(ctx, k8sClient.HelmActionConfig); err != nil {
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to uninstall Cilium: %s", err))
 		return
 	}
 }

@@ -71,7 +71,7 @@ func (r *CiliumClusterMeshConnectResource) Schema(ctx context.Context, req resou
 				Default:             int32default.StaticInt32(1),
 			},
 			"connection_mode": schema.StringAttribute{
-				MarkdownDescription: ConcatDefault("Connection mode. unicast, bidirectional and mesh", "bidirectional"),
+				MarkdownDescription: ConcatDefault("Connection Mode { `unicast` | `bidirectional` | `mesh` }", "bidirectional"),
 				Optional:            true,
 				Computed:            true,
 				Default:             stringdefault.StaticString("bidirectional"),
@@ -123,8 +123,8 @@ func (r *CiliumClusterMeshConnectResource) Configure(ctx context.Context, req re
 func (r *CiliumClusterMeshConnectResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var data CiliumClusterMeshConnectResourceModel
 	c := r.client
-	if c == nil {
-		resp.Diagnostics.AddError("Client Error", "Unable to connect to kubernetes")
+	if err := c.Ready(); err != nil {
+		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
 	}
 	k8sClient, namespace, helm_release := c.client, c.namespace, c.helm_release
@@ -146,7 +146,7 @@ func (r *CiliumClusterMeshConnectResource) Create(ctx context.Context, req resou
 	params.Parallel = int(data.Parallel.ValueInt32())
 
 	cm := clustermesh.NewK8sClusterMesh(k8sClient, params)
-	if err := cm.ConnectWithHelm(context.Background()); err != nil {
+	if err := cm.ConnectWithHelm(ctx); err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to connect cluster: %s", err))
 		return
 	}
@@ -166,8 +166,8 @@ func (r *CiliumClusterMeshConnectResource) Create(ctx context.Context, req resou
 func (r *CiliumClusterMeshConnectResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data CiliumClusterMeshConnectResourceModel
 	c := r.client
-	if c == nil {
-		resp.Diagnostics.AddError("Client Error", "Unable to connect to kubernetes")
+	if err := c.Ready(); err != nil {
+		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
 	}
 	k8sClient, namespace, helm_release := c.client, c.namespace, c.helm_release
@@ -188,7 +188,7 @@ func (r *CiliumClusterMeshConnectResource) Read(ctx context.Context, req resourc
 	params.WaitDuration = 20 * time.Second
 
 	cm := clustermesh.NewK8sClusterMesh(k8sClient, params)
-	if _, err := cm.Status(context.Background()); err != nil {
+	if _, err := cm.Status(ctx); err != nil {
 		resp.State.RemoveResource(ctx)
 		return
 	}
@@ -200,8 +200,8 @@ func (r *CiliumClusterMeshConnectResource) Read(ctx context.Context, req resourc
 func (r *CiliumClusterMeshConnectResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var data CiliumClusterMeshConnectResourceModel
 	c := r.client
-	if c == nil {
-		resp.Diagnostics.AddError("Client Error", "Unable to connect to kubernetes")
+	if err := c.Ready(); err != nil {
+		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
 	}
 	k8sClient, namespace, helm_release := c.client, c.namespace, c.helm_release
@@ -221,7 +221,7 @@ func (r *CiliumClusterMeshConnectResource) Update(ctx context.Context, req resou
 	params.HelmReleaseName = helm_release
 
 	cm := clustermesh.NewK8sClusterMesh(k8sClient, params)
-	if err := cm.ConnectWithHelm(context.Background()); err != nil {
+	if err := cm.ConnectWithHelm(ctx); err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to connect clusters: %s", err))
 		return
 	}
@@ -233,8 +233,8 @@ func (r *CiliumClusterMeshConnectResource) Update(ctx context.Context, req resou
 func (r *CiliumClusterMeshConnectResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data CiliumClusterMeshConnectResourceModel
 	c := r.client
-	if c == nil {
-		resp.Diagnostics.AddError("Client Error", "Unable to connect to kubernetes")
+	if err := c.Ready(); err != nil {
+		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
 	}
 	k8sClient, namespace, helm_release := c.client, c.namespace, c.helm_release
@@ -255,7 +255,7 @@ func (r *CiliumClusterMeshConnectResource) Delete(ctx context.Context, req resou
 	params.DestinationContext = ValueList(ctx, data.DestinationContexts)
 
 	cm := clustermesh.NewK8sClusterMesh(k8sClient, params)
-	if err := cm.DisconnectWithHelm(context.Background()); err != nil {
+	if err := cm.DisconnectWithHelm(ctx); err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to disconnect clusters: %s", err))
 		return
 	}

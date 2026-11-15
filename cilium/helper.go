@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"os"
+	"sync"
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -16,7 +17,6 @@ import (
 
 	"gopkg.in/yaml.v3"
 	"helm.sh/helm/v4/pkg/action"
-	"helm.sh/helm/v4/pkg/release"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -31,13 +31,64 @@ type CiliumClient struct {
 	client       *k8s.Client
 	namespace    string
 	helm_release string
+	// err is the error returned while creating the Kubernetes client. It is
+	// reported by resources only when they need to reach the cluster, so that
+	// a kubeconfig created in the same apply does not break the plan.
+	err error
+}
+
+// Ready returns an error if the Kubernetes client is not available.
+func (c *CiliumClient) Ready() error {
+	if c == nil {
+		return fmt.Errorf("unable to connect to kubernetes: the provider is not configured")
+	}
+	if c.err != nil {
+		return fmt.Errorf("unable to connect to kubernetes: %w", c.err)
+	}
+	return nil
 }
 
 func ConcatDefault(text string, d string) string {
 	return fmt.Sprintf("%s (Default: `%s`).", text, d)
 }
 
-func (c *CiliumClient) Wait() (err error) {
+// tempFiles tracks the temporary files that must outlive a single RPC (e.g. the
+// kubeconfig written from config_content) so they can be removed on exit.
+var (
+	tempFilesMu sync.Mutex
+	tempFiles   []string
+)
+
+// CleanupTempFiles removes the temporary files created by the provider.
+func CleanupTempFiles() {
+	tempFilesMu.Lock()
+	defer tempFilesMu.Unlock()
+	for _, f := range tempFiles {
+		os.Remove(f)
+	}
+	tempFiles = nil
+}
+
+// writeTempFile writes content to a new temporary file and returns its path.
+// The caller is responsible for removing it.
+func writeTempFile(pattern string, content []byte) (string, error) {
+	f, err := os.CreateTemp("", pattern)
+	if err != nil {
+		return "", err
+	}
+	if _, err := f.Write(content); err != nil {
+		f.Close()
+		os.Remove(f.Name())
+		return "", err
+	}
+	if err := f.Close(); err != nil {
+		os.Remove(f.Name())
+		return "", err
+	}
+	return f.Name(), nil
+}
+
+func (c *CiliumClient) Wait(ctx context.Context) (err error) {
 	var status_params = status.K8sStatusParameters{}
 	status_params.Namespace = c.namespace
 	status_params.Wait = true
@@ -46,33 +97,36 @@ func (c *CiliumClient) Wait() (err error) {
 	if err != nil {
 		return err
 	}
-	_, err = collector.Status(context.Background())
+	_, err = collector.Status(ctx)
 	return err
 }
 
-func (c *CiliumClient) GetCurrentRelease() (release.Releaser, error) {
+func (c *CiliumClient) helmActionConfig() (*action.Configuration, error) {
 	// Use the default Helm driver (Kubernetes secret).
 	helmDriver := ""
 	actionConfig := action.Configuration{}
 	if err := actionConfig.Init(c.client.RESTClientGetter, c.namespace, helmDriver); err != nil {
 		return nil, err
 	}
-	currentRelease, err := actionConfig.Releases.Last(c.helm_release)
+	return &actionConfig, nil
+}
+
+// ReleaseExists returns nil if the Cilium Helm release exists.
+func (c *CiliumClient) ReleaseExists() error {
+	actionConfig, err := c.helmActionConfig()
 	if err != nil {
-		return nil, err
+		return err
 	}
-	return currentRelease, nil
+	_, err = actionConfig.Releases.Last(c.helm_release)
+	return err
 }
 
 func (c *CiliumClient) GetHelmValues() (string, error) {
-	helmDriver := ""
-	actionConfig := action.Configuration{}
-	if err := actionConfig.Init(c.client.RESTClientGetter, c.namespace, helmDriver); err != nil {
+	actionConfig, err := c.helmActionConfig()
+	if err != nil {
 		return "", err
 	}
-	client := action.NewGetValues(&actionConfig)
-
-	vals, err := client.Run(c.helm_release)
+	vals, err := action.NewGetValues(actionConfig).Run(c.helm_release)
 	if err != nil {
 		return "", err
 	}
@@ -99,14 +153,11 @@ func (c *CiliumClient) GetCA(ctx context.Context) (map[string]attr.Value, error)
 }
 
 func (c *CiliumClient) GetMetadata() (string, error) {
-	helmDriver := ""
-	actionConfig := action.Configuration{}
-	if err := actionConfig.Init(c.client.RESTClientGetter, c.namespace, helmDriver); err != nil {
+	actionConfig, err := c.helmActionConfig()
+	if err != nil {
 		return "", err
 	}
-	client := action.NewGetMetadata(&actionConfig)
-
-	vals, err := client.Run(c.helm_release)
+	vals, err := action.NewGetMetadata(actionConfig).Run(c.helm_release)
 	if err != nil {
 		return "", err
 	}
@@ -114,13 +165,13 @@ func (c *CiliumClient) GetMetadata() (string, error) {
 	return vals.AppVersion, nil
 }
 
-func (c *CiliumClient) WaitClusterMesh() (err error) {
+func (c *CiliumClient) WaitClusterMesh(ctx context.Context) (err error) {
 	var params = clustermesh.Parameters{Writer: os.Stdout}
 	params.Namespace = c.namespace
 	params.Wait = true
 	params.WaitDuration = 2 * time.Minute
 	cm := clustermesh.NewK8sClusterMesh(c.client, params)
-	if _, err := cm.Status(context.Background()); err != nil {
+	if _, err := cm.Status(ctx); err != nil {
 		return err
 	}
 	return nil

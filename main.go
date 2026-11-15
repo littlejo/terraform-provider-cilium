@@ -44,6 +44,7 @@ func main() {
 	}
 
 	err := providerserver.Serve(context.Background(), provider.New(version), opts)
+	provider.CleanupTempFiles()
 
 	if err != nil {
 		log.Fatal(err.Error())

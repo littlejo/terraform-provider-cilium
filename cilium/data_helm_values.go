@@ -7,9 +7,6 @@ import (
 	"context"
 	"fmt"
 
-	"gopkg.in/yaml.v3"
-	"helm.sh/helm/v4/pkg/action"
-
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -74,11 +71,10 @@ func (d *CiliumHelmValuesDataSource) Configure(ctx context.Context, req datasour
 func (d *CiliumHelmValuesDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data CiliumHelmValuesDataSourceModel
 	c := d.client
-	if c == nil {
-		resp.Diagnostics.AddError("Client Error", "Unable to connect to kubernetes")
+	if err := c.Ready(); err != nil {
+		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
 	}
-	k8sClient, namespace, helm_release := c.client, c.namespace, c.helm_release
 
 	// Read Terraform configuration data into the model
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
@@ -86,29 +82,13 @@ func (d *CiliumHelmValuesDataSource) Read(ctx context.Context, req datasource.Re
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	actionConfig := action.Configuration{}
-	helmDriver := ""
-	if err := actionConfig.Init(k8sClient.RESTClientGetter, namespace, helmDriver); err != nil {
-		return
-	}
-
-	client := action.NewGetValues(&actionConfig)
-
-	vals, err := client.Run(helm_release)
-
+	helm_values, err := c.GetHelmValues()
 	if err != nil {
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read Helm values of release %s/%s: %s", c.namespace, c.helm_release, err))
 		return
 	}
 
-	// For the purposes of this example code, hardcoding a response value to
-	// save into the Terraform state.
-	yaml, err := yaml.Marshal(vals)
-	if err != nil {
-		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Failed: %s", err))
-		return
-	}
-
-	data.Yaml = types.StringValue(string(yaml))
+	data.Yaml = types.StringValue(helm_values)
 
 	// Write logs using the tflog package
 	// Documentation: https://terraform.io/plugin/log

@@ -12,10 +12,12 @@ import (
 	"github.com/cilium/cilium/cilium-cli/k8s"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/provider/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
 
 // Ensure CiliumProvider satisfies various provider interfaces.
@@ -79,6 +81,13 @@ func (p *CiliumProvider) Configure(ctx context.Context, req provider.ConfigureRe
 		return
 	}
 
+	// Provider configuration may depend on resources that are not created yet
+	// (e.g. the Kubernetes cluster): Terraform configures the provider again
+	// once the values are known.
+	if data.Context.IsUnknown() || data.ConfigPath.IsUnknown() || data.ConfigContent.IsUnknown() || data.Namespace.IsUnknown() || data.HelmRelease.IsUnknown() {
+		return
+	}
+
 	namespace := data.Namespace.ValueString()
 	config_path := data.ConfigPath.ValueString()
 	context := data.Context.ValueString()
@@ -94,19 +103,18 @@ func (p *CiliumProvider) Configure(ctx context.Context, req provider.ConfigureRe
 	if config_content != "" {
 		config_content_str, err := base64.StdEncoding.DecodeString(config_content)
 		if err != nil {
-			panic(err)
+			resp.Diagnostics.AddAttributeError(path.Root("config_content"), "Invalid config_content", fmt.Sprintf("config_content must be a base64-encoded kubeconfig: %s", err))
+			return
 		}
-		f, err := os.CreateTemp("", "kubeconfig")
+		f, err := writeTempFile("kubeconfig", config_content_str)
 		if err != nil {
-			panic(err)
+			resp.Diagnostics.AddError("Provider Configuration Error", fmt.Sprintf("Unable to write kubeconfig to a temporary file: %s", err))
+			return
 		}
-		if _, err := f.Write(config_content_str); err != nil {
-			panic(err)
-		}
-		if err := f.Close(); err != nil {
-			panic(err)
-		}
-		config_path = f.Name()
+		tempFilesMu.Lock()
+		tempFiles = append(tempFiles, f)
+		tempFilesMu.Unlock()
+		config_path = f
 	}
 	if config_path != "" {
 		os.Setenv("KUBECONFIG", config_path)
@@ -117,16 +125,12 @@ func (p *CiliumProvider) Configure(ctx context.Context, req provider.ConfigureRe
 
 	client, err := k8s.NewClient(context, config_path, namespace, impersonate_as, impersonate_groups)
 	if err != nil {
-		fmt.Printf("unable to create Kubernetes client: %v\n", err)
-		return
+		tflog.Warn(ctx, "Unable to create Kubernetes client", map[string]any{"error": err.Error()})
 	}
 
-	// Configuration values are now available.
-	// if data.Endpoint.IsNull() { /* ... */ }
-
-	// Example client configuration for data sources and resources
-	resp.DataSourceData = &CiliumClient{client: client, namespace: namespace, helm_release: helm_release}
-	resp.ResourceData = &CiliumClient{client: client, namespace: namespace, helm_release: helm_release}
+	ciliumClient := &CiliumClient{client: client, namespace: namespace, helm_release: helm_release, err: err}
+	resp.DataSourceData = ciliumClient
+	resp.ResourceData = ciliumClient
 }
 
 func (p *CiliumProvider) Resources(ctx context.Context) []func() resource.Resource {
