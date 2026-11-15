@@ -15,8 +15,8 @@ import (
 	"github.com/cilium/cilium/cilium-cli/status"
 
 	"gopkg.in/yaml.v3"
-	"helm.sh/helm/v3/pkg/action"
-	"helm.sh/helm/v3/pkg/release"
+	"helm.sh/helm/v4/pkg/action"
+	"helm.sh/helm/v4/pkg/release"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -50,12 +50,11 @@ func (c *CiliumClient) Wait() (err error) {
 	return err
 }
 
-func (c *CiliumClient) GetCurrentRelease() (*release.Release, error) {
+func (c *CiliumClient) GetCurrentRelease() (release.Releaser, error) {
 	// Use the default Helm driver (Kubernetes secret).
 	helmDriver := ""
 	actionConfig := action.Configuration{}
-	logger := func(format string, v ...interface{}) {}
-	if err := actionConfig.Init(c.client.RESTClientGetter, c.namespace, helmDriver, logger); err != nil {
+	if err := actionConfig.Init(c.client.RESTClientGetter, c.namespace, helmDriver); err != nil {
 		return nil, err
 	}
 	currentRelease, err := actionConfig.Releases.Last(c.helm_release)
@@ -68,8 +67,7 @@ func (c *CiliumClient) GetCurrentRelease() (*release.Release, error) {
 func (c *CiliumClient) GetHelmValues() (string, error) {
 	helmDriver := ""
 	actionConfig := action.Configuration{}
-	logger := func(format string, v ...interface{}) {}
-	if err := actionConfig.Init(c.client.RESTClientGetter, c.namespace, helmDriver, logger); err != nil {
+	if err := actionConfig.Init(c.client.RESTClientGetter, c.namespace, helmDriver); err != nil {
 		return "", err
 	}
 	client := action.NewGetValues(&actionConfig)
@@ -103,8 +101,7 @@ func (c *CiliumClient) GetCA(ctx context.Context) (map[string]attr.Value, error)
 func (c *CiliumClient) GetMetadata() (string, error) {
 	helmDriver := ""
 	actionConfig := action.Configuration{}
-	logger := func(format string, v ...interface{}) {}
-	if err := actionConfig.Init(c.client.RESTClientGetter, c.namespace, helmDriver, logger); err != nil {
+	if err := actionConfig.Init(c.client.RESTClientGetter, c.namespace, helmDriver); err != nil {
 		return "", err
 	}
 	client := action.NewGetMetadata(&actionConfig)
