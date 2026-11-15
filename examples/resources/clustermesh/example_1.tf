@@ -4,7 +4,7 @@ resource "cilium" "example" {
     "cluster.id=1",
     "ipam.mode=kubernetes",
   ]
-  version = "1.14.5"
+  version = "1.20.4"
 }
 
 resource "cilium_clustermesh" "example" {

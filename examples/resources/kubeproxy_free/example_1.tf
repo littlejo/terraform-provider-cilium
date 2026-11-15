@@ -25,7 +25,7 @@ resource "cilium" "example" {
     "ipam.operator.replicas=1",
     "tunnel=vxlan",
   ]
-  version = "1.14.5"
+  version = "1.20.4"
 }
 
 #Complete example: https://github.com/littlejo/terraform-kind-cilium
