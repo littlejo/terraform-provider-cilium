@@ -54,7 +54,7 @@ func ConcatDefault(text string, d string) string {
 
 // DefaultCiliumVersion is the Cilium version installed when none is specified.
 // renovate: datasource=github-releases depName=cilium/cilium
-const DefaultCiliumVersion = "1.20.4"
+const DefaultCiliumVersion = "1.20.5"
 
 // tempFiles tracks the temporary files that must outlive a single RPC (e.g. the
 // kubeconfig written from config_content) so they can be removed on exit.
